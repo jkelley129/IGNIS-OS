@@ -1,6 +1,5 @@
 #include "keyboard.h"
-#include "ports.h"
-#include "vga.h"
+#include "../io/vga.h"
 
 // US QWERTY keyboard layout scancode to ASCII
 static const char scancode_to_ascii[] = {
