@@ -20,37 +20,43 @@ OBJS = $(BUILD_DIR)/boot.o \
        $(BUILD_DIR)/shell.o \
        $(BUILD_DIR)/string.o
 
-all: dist/ignis.iso
+all: $(OUTPUT_DIR)/ignis.iso
 
-$(OUTPUT_DIR)/ignis.iso: iso
+$(OUTPUT_DIR)/ignis.iso: iso | $(OUTPUT_DIR)
 	$(GRUB_CREATE_ISO) -o $@ $^
 
 iso: $(OBJS)
 	$(LD) $(LDFLAGS) -o $@/boot/kernel.elf $^
 
-$(BUILD_DIR)/kernel.o: kernel.c
+$(BUILD_DIR)/kernel.o: kernel.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD_DIR)/boot.o: boot.asm
+$(BUILD_DIR)/boot.o: boot.asm | $(BUILD_DIR)
 	$(NASM) -f elf64 $< -o $@
 
-$(BUILD_DIR)/idt_asm.o: idt.asm
+$(BUILD_DIR)/idt_asm.o: idt.asm | $(BUILD_DIR)
 	$(NASM) -f elf64 $< -o $@
 
-$(BUILD_DIR)/vga.o: io/vga.c
+$(BUILD_DIR)/vga.o: io/vga.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD_DIR)/idt.o: io/idt.c
+$(BUILD_DIR)/idt.o: io/idt.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD_DIR)/keyboard.o: drivers/keyboard.c
+$(BUILD_DIR)/keyboard.o: drivers/keyboard.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD_DIR)/shell.o: shell.c
+$(BUILD_DIR)/shell.o: shell.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD_DIR)/string.o: libc/string.c
+$(BUILD_DIR)/string.o: libc/string.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR):
+	@mkdir -p $@
+
+$(OUTPUT_DIR):
+	@mkdir -p $@
 
 clean:
 	rm -rf $(BUILD_DIR)/* $(OUTPUT_DIR)/* iso/boot/kernel.elf
