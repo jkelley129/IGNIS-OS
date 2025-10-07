@@ -1,4 +1,6 @@
 #include "io/vga.h"
+#include "io/idt.h"
+#include "drivers/keyboard.h"
 
 void kernel_main() {
     // Initialize the VGA text mode
@@ -11,5 +13,27 @@ void kernel_main() {
     vga_set_color((vga_color_attr_t) {VGA_COLOR_LIGHT_BLUE, VGA_COLOR_BLACK});
     vga_puts("--- Feature List ---\n\n");
     vga_set_color((vga_color_attr_t) {VGA_COLOR_WHITE, VGA_COLOR_BLACK});
-    vga_puts("Colored Text Output");
+    vga_puts("Colored Text Output\n");
+    vga_puts("Keyboard Input\n\n");
+    vga_set_color((vga_color_attr_t) {VGA_COLOR_BROWN, VGA_COLOR_BLACK});
+    vga_puts("Type something: ");
+    vga_set_color((vga_color_attr_t) {VGA_COLOR_WHITE, VGA_COLOR_BLACK});
+
+    // Initialize interrupts and keyboard
+    vga_puts("Initializing IDT...\n");
+    idt_init();
+    vga_puts("IDT initialized!\n");
+
+    vga_puts("Initializing keyboard...\n");
+    keyboard_init();
+    vga_puts("Keyboard initialized!\n");
+
+    vga_puts("Ready! System is running.\n");
+
+    asm volatile("sti");
+
+    // Infinite loop - interrupts will handle keyboard input
+    while(1) {
+        asm volatile("hlt");
+    }
 }

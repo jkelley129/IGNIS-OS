@@ -8,19 +8,35 @@ LDFLAGS = -m elf_i386 -T link.ld
 
 BUILD_DIR = build
 
-# Add input.o to the list of objects
+# Updated object file list
+OBJS = $(BUILD_DIR)/boot.o \
+       $(BUILD_DIR)/kernel.o \
+       $(BUILD_DIR)/vga.o \
+       $(BUILD_DIR)/idt.o \
+       $(BUILD_DIR)/keyboard.o \
+       $(BUILD_DIR)/idt_asm.o
+
 all: $(BUILD_DIR)/kernel.elf
 
-$(BUILD_DIR)/kernel.elf: $(BUILD_DIR)/boot.o $(BUILD_DIR)/kernel.o $(BUILD_DIR)/vga.o
+$(BUILD_DIR)/kernel.elf: $(OBJS)
 	$(LD) $(LDFLAGS) -o $@ $^
 
-$(BUILD_DIR)/%.o: %.c
+$(BUILD_DIR)/kernel.o: kernel.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD_DIR)/%.o: %.asm
+$(BUILD_DIR)/boot.o: boot.asm
 	$(NASM) -f elf32 $< -o $@
 
-$(BUILD_DIR)/%.o: io/%.c
+$(BUILD_DIR)/idt_asm.o: idt.asm
+	$(NASM) -f elf32 $< -o $@
+
+$(BUILD_DIR)/vga.o: io/vga.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/idt.o: io/idt.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/keyboard.o: drivers/keyboard.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
