@@ -64,5 +64,8 @@ clean:
 clean_objs:
 	rm -rf $(BUILD_DIR)/*
 
+run_debug:
+	qemu-system-x86_64 -cdrom $(OUTPUT_DIR)/ignis.iso -no-reboot -d int,cpu_reset -no-reboot 2>&1
+
 run:
-	qemu-system-x86_64 -cdrom $(BUILD_DIR)/ignis.iso
+	qemu-system-x86_64 -cdrom $(OUTPUT_DIR)/ignis.iso
