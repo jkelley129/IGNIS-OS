@@ -62,3 +62,25 @@ void* memset(void* s, int c, size_t n) {
     }
     return s;
 }
+
+void uitoa(uint64_t value, char* str) {
+    if (value == 0) {
+        str[0] = '0';
+        str[1] = '\0';
+        return;
+    }
+
+    char temp[32];
+    int i = 0;
+
+    while (value > 0) {
+        temp[i++] = '0' + (value % 10);
+        value /= 10;
+    }
+
+    int j = 0;
+    while (i > 0) {
+        str[j++] = temp[--i];
+    }
+    str[j] = '\0';
+}
