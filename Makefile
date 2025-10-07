@@ -1,6 +1,7 @@
 CC = gcc
 LD = ld
 NASM = nasm
+GRUB_CREATE_ISO = grub-mkrescue
 
 # Changed to 64-bit flags
 CFLAGS = -m64 -ffreestanding -nostdlib -nostdinc -fno-pie -mcmodel=large -mno-red-zone -I. -Idrivers -Iio
@@ -21,7 +22,7 @@ OBJS = $(BUILD_DIR)/boot.o \
 all: build/ignis.iso
 
 build/ignis.iso: iso
-	grub-mkrescue -o $@ $^
+	$(GRUB_CREATE_ISO) -o $@ $^
 
 iso: $(OBJS)
 	$(LD) $(LDFLAGS) -o $@/boot/kernel.elf $^
