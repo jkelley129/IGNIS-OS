@@ -8,6 +8,7 @@ CFLAGS = -m64 -ffreestanding -nostdlib -nostdinc -fno-pie -mcmodel=large -mno-re
 LDFLAGS = -m elf_x86_64 -T link.ld -nostdlib
 
 BUILD_DIR = build
+OUTPUT_DIR = dist
 
 # Updated object file list
 OBJS = $(BUILD_DIR)/boot.o \
@@ -19,9 +20,9 @@ OBJS = $(BUILD_DIR)/boot.o \
        $(BUILD_DIR)/shell.o \
        $(BUILD_DIR)/string.o
 
-all: build/ignis.iso
+all: dist/ignis.iso
 
-build/ignis.iso: iso
+$(OUTPUT_DIR)/ignis.iso: iso
 	$(GRUB_CREATE_ISO) -o $@ $^
 
 iso: $(OBJS)
@@ -52,7 +53,10 @@ $(BUILD_DIR)/string.o: libc/string.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -rf $(BUILD_DIR)/* iso/boot/kernel.elf
+	rm -rf $(BUILD_DIR)/* $(OUTPUT_DIR)/* iso/boot/kernel.elf
+
+clean_objs:
+	rm -rf $(BUILD_DIR)/*
 
 run:
 	qemu-system-x86_64 -cdrom $(BUILD_DIR)/ignis.iso
