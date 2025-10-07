@@ -5,7 +5,7 @@
 #define CMD_BUFFER_SIZE 256
 
 static char cmd_buffer[CMD_BUFFER_SIZE];
-static uint32_t cmd_pos = 0;
+static size_t cmd_pos = 0;  // Changed from uint32_t to size_t
 
 void shell_init(){
     memset(cmd_buffer, 0, CMD_BUFFER_SIZE);
@@ -37,7 +37,7 @@ void cmd_echo() {
     // Print everything after "echo "
     if (cmd_pos > 5) {
         vga_putc('\n');
-        for (uint32_t i = 5; i < cmd_pos; i++) {
+        for (size_t i = 5; i < cmd_pos; i++) {
             vga_putc(cmd_buffer[i]);
         }
         vga_putc('\n');
@@ -51,7 +51,7 @@ void cmd_about() {
     vga_set_color((vga_color_attr_t){VGA_COLOR_LIGHT_CYAN, VGA_COLOR_BLACK});
     vga_puts("IGNIS Operating System\n");
     vga_set_color((vga_color_attr_t){VGA_COLOR_WHITE, VGA_COLOR_BLACK});
-    vga_puts("Version: 0.0.01\n");
+    vga_puts("Version: 0.0.01 (64-bit)\n");
     vga_puts("Developer: Josh Kelley\n");
     vga_puts("A hobby OS written from scratch!\n\n");
 }

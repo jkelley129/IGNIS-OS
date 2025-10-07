@@ -1,8 +1,9 @@
 #include "string.h"
 #include "stdint.h"
 
-uint32_t strlen(const char* str){
-    uint32_t len = 0;
+// Using size_t (which is 64-bit in 64-bit mode)
+size_t strlen(const char* str){
+    size_t len = 0;
     while(str[len]){
         len++;
     }
@@ -18,7 +19,7 @@ int strcmp(const char* s1, const char* s2){
 }
 
 // Compare n characters of two strings
-int strncmp(const char* s1, const char* s2, uint32_t n) {
+int strncmp(const char* s1, const char* s2, size_t n) {
     while (n && *s1 && (*s1 == *s2)) {
         s1++;
         s2++;
@@ -41,7 +42,7 @@ char* strcpy(char* dest, const char* src) {
 }
 
 // Copy n characters
-char* strncpy(char* dest, const char* src, uint32_t n) {
+char* strncpy(char* dest, const char* src, size_t n) {
     char* orig_dest = dest;
     while (n && *src) {
         *dest++ = *src++;
@@ -54,7 +55,7 @@ char* strncpy(char* dest, const char* src, uint32_t n) {
     return orig_dest;
 }
 
-void* memset(void* s, int c, uint32_t n) {
+void* memset(void* s, int c, size_t n) {
     unsigned char* p = s;
     while (n--) {
         *p++ = (unsigned char)c;

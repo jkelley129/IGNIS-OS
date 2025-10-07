@@ -1,10 +1,10 @@
-# Makefile
 CC = gcc
 LD = ld
 NASM = nasm
 
-CFLAGS = -m32 -ffreestanding -nostdlib -nostdinc -I. -Idrivers -Iio
-LDFLAGS = -m elf_i386 -T link.ld
+# Changed to 64-bit flags
+CFLAGS = -m64 -ffreestanding -nostdlib -nostdinc -fno-pie -mcmodel=large -mno-red-zone -I. -Idrivers -Iio
+LDFLAGS = -m elf_x86_64 -T link.ld -nostdlib
 
 BUILD_DIR = build
 
@@ -18,19 +18,22 @@ OBJS = $(BUILD_DIR)/boot.o \
        $(BUILD_DIR)/shell.o \
        $(BUILD_DIR)/string.o
 
-all: $(BUILD_DIR)/kernel.elf
+all: build/ignis.iso
 
-$(BUILD_DIR)/kernel.elf: $(OBJS)
-	$(LD) $(LDFLAGS) -o $@ $^
+build/ignis.iso: iso
+	grub-mkrescue -o $@ $^
+
+iso: $(OBJS)
+	$(LD) $(LDFLAGS) -o $@/boot/kernel.elf $^
 
 $(BUILD_DIR)/kernel.o: kernel.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/boot.o: boot.asm
-	$(NASM) -f elf32 $< -o $@
+	$(NASM) -f elf64 $< -o $@
 
 $(BUILD_DIR)/idt_asm.o: idt.asm
-	$(NASM) -f elf32 $< -o $@
+	$(NASM) -f elf64 $< -o $@
 
 $(BUILD_DIR)/vga.o: io/vga.c
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -46,8 +49,9 @@ $(BUILD_DIR)/shell.o: shell.c
 
 $(BUILD_DIR)/string.o: libc/string.c
 	$(CC) $(CFLAGS) -c $< -o $@
+
 clean:
-	rm -rf $(BUILD_DIR)/*
+	rm -rf $(BUILD_DIR)/* iso/boot/kernel.elf
 
 run:
-	qemu-system-i386 -kernel $(BUILD_DIR)/kernel.elf
+	qemu-system-x86_64 -cdrom $(BUILD_DIR)/ignis.iso

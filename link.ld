@@ -1,15 +1,27 @@
-/* link.ld */
+/* link.ld - 64-bit version */
 ENTRY(_start)
 
 SECTIONS {
-    . = 0x100000;
-    .multiboot : {
+    . = 1M;
+
+    .multiboot ALIGN(8) : {
         *(.multiboot)
     }
-    .text : {
+
+    .text ALIGN(4K) : {
         *(.text)
     }
-    .bss : {
+
+    .rodata ALIGN(4K) : {
+        *(.rodata)
+    }
+
+    .data ALIGN(4K) : {
+        *(.data)
+    }
+
+    .bss ALIGN(4K) : {
         *(.bss)
+        *(COMMON)
     }
 }

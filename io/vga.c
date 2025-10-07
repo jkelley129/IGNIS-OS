@@ -1,6 +1,7 @@
 #include "vga.h"
 
-static uint16_t* vga_buffer =  (uint16_t*) VGA_MEMORY;
+// Cast to uint64_t first, then to pointer (avoids warnings)
+static uint16_t* vga_buffer = (uint16_t*)(uint64_t)VGA_MEMORY;
 static uint16_t vga_cursor = 0;
 static vga_color_attr_t vga_color = {VGA_COLOR_WHITE, VGA_COLOR_BLACK};
 
@@ -11,7 +12,7 @@ void vga_init(){
 void vga_clear(){
   for (uint16_t i = 0; i < VGA_WIDTH * VGA_HEIGHT; i++){
     vga_buffer[i] = (vga_color.background << 12) | (vga_color.foreground << 8);
-  } 
+  }
   vga_cursor = 0;
 }
 
