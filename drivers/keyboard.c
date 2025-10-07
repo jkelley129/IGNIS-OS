@@ -20,9 +20,14 @@ static const char scancode_to_ascii_shift[] = {
 };
 
 static uint8_t shift_pressed = 0;
+static keyboard_callback_t key_callback = 0;
 
 void keyboard_init() {
     // Keyboard is initialized by the BIOS, nothing needed
+}
+
+void keyboard_set_callback(keyboard_callback_t callback) {
+    key_callback = callback;
 }
 
 void keyboard_handler() {
@@ -38,8 +43,13 @@ void keyboard_handler() {
         return;
     }
 
-    if(scancode == 0xE){
-        vga_backspace(1);
+    if(scancode == 0x0E) {
+        if (key_callback) {
+            key_callback('\b');
+            vga_backspace(1);
+        } else {
+            vga_backspace(1);
+        }
         return;
     }
 
@@ -60,6 +70,11 @@ void keyboard_handler() {
 
     // Print the character if valid
     if (c) {
-        vga_putc(c);
+        if (key_callback) {
+            key_callback(c);
+            vga_putc(c);
+        } else {
+            vga_putc(c);
+        }
     }
 }

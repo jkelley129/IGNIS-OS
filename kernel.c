@@ -1,6 +1,7 @@
 #include "io/vga.h"
 #include "io/idt.h"
 #include "drivers/keyboard.h"
+#include "shell.h"
 
 void kernel_main() {
     // Initialize the VGA text mode
@@ -31,6 +32,9 @@ void kernel_main() {
     vga_puts("Ready! System is running.\n");
 
     asm volatile("sti");
+
+    keyboard_set_callback(shell_handle_char);
+    shell_init();
 
     // Infinite loop - interrupts will handle keyboard input
     while(1) {

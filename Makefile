@@ -14,7 +14,9 @@ OBJS = $(BUILD_DIR)/boot.o \
        $(BUILD_DIR)/vga.o \
        $(BUILD_DIR)/idt.o \
        $(BUILD_DIR)/keyboard.o \
-       $(BUILD_DIR)/idt_asm.o
+       $(BUILD_DIR)/idt_asm.o \
+       $(BUILD_DIR)/shell.o \
+       $(BUILD_DIR)/string.o
 
 all: $(BUILD_DIR)/kernel.elf
 
@@ -39,6 +41,11 @@ $(BUILD_DIR)/idt.o: io/idt.c
 $(BUILD_DIR)/keyboard.o: drivers/keyboard.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
+$(BUILD_DIR)/shell.o: shell.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/string.o: libc/string.c
+	$(CC) $(CFLAGS) -c $< -o $@
 clean:
 	rm -rf $(BUILD_DIR)/*
 
