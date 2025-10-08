@@ -242,6 +242,24 @@ int vfs_delete(const char* path){
     return 0;
 }
 
+int vfs_copy_file(const char* dest_path, file_t* source, size_t size){
+    if(strcmp(dest_path, "/")){
+        vga_perror("Cannot overwrite root\n");
+        return -1;
+    }
+
+    file_t* dest_file = vfs_resolve_path(dest_path);
+    if(!dest_file){
+        dest_file = vfs_create_file(dest_path);
+    }
+
+    for(size_t i = 0; i < size; i++){
+        dest_file->data[i] = source->data[i];
+    }
+
+    return 0;
+}
+
 void vfs_list(const char* path){
     file_t* dir = vfs_resolve_path(path);
 

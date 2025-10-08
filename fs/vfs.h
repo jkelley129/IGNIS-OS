@@ -34,6 +34,7 @@ int vfs_read(file_t* file, void* buffer, size_t size);
 int vfs_delete(const char* path);
 void vfs_list(const char* path);
 void vfs_print_tree(file_t* dir, int depth);
+int vfs_copy_file(const char* dest, file_t* source, size_t size);
 
 // Helper functions
 file_t* vfs_resolve_path(const char* path);
