@@ -27,5 +27,26 @@ Ignis is an open source hobby OS meant to gain experience with low level concept
   - The `Makefile` creates a ignis.iso file in iso/boot/ that is emulated by QEMU
 - Run the QEMU emulator with `make run` or `make run_debug`
 
+## Current Features
+Features in rough chronological order of implementation
+- VGA for outputting text to the screen
+- Interrupt Descriptor Table for handling interrupts(keypresses, hardware interrupts)
+- Interactive kernel-level shell for debugging and functionality
+- Programmable Interval Timer with interrupt handling
+- Custom memory allocator, with a simple free list implementation
+- In-memory filesystem with simple utilities(create, list, copy, delete, etc.)
+
+## Features I hope to add
+- Disk driver for persistent storage
+- Implementation of an on-disk filesystem
+- More standard filesystem(FAT32, or other)
+- More device drivers for more devices
+- Audio integration
+- More sophisticated memory allocator(buddy allocator, slab allocator)
+- User space with limited permissions
+- User applications(text editor, clock, stopwatch, utilities)
+- Support for executing user programs
+- Graphical User Interface(maybe)
+
 ## Contributing
 ### Just make a pull request
