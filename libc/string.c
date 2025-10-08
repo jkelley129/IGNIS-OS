@@ -55,6 +55,27 @@ char* strncpy(char* dest, const char* src, size_t n) {
     return orig_dest;
 }
 
+char* strcat(char* dest, const char* src) {
+    char *original_dest = dest; // Store the original destination pointer to return it
+
+    // Find the end of the destination string
+    while (*dest != '\0') {
+        dest++;
+    }
+
+    // Copy characters from source to destination
+    while (*src != '\0') {
+        *dest = *src;
+        dest++;
+        src++;
+    }
+
+    // Add the null terminator to the end of the concatenated string
+    *dest = '\0';
+
+    return original_dest; // Return the pointer to the original destination
+}
+
 void* memset(void* s, int c, size_t n) {
     unsigned char* p = s;
     while (n--) {
