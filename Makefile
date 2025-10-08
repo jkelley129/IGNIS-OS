@@ -19,7 +19,8 @@ OBJS = $(BUILD_DIR)/boot.o \
        $(BUILD_DIR)/pit.o \
        $(BUILD_DIR)/idt_asm.o \
        $(BUILD_DIR)/shell.o \
-       $(BUILD_DIR)/string.o
+       $(BUILD_DIR)/string.o \
+       $(BUILD_DIR)/memory.o
 
 all: $(OUTPUT_DIR)/ignis.iso
 
@@ -30,6 +31,9 @@ iso: $(OBJS)
 	$(LD) $(LDFLAGS) -o $@/boot/kernel.elf $^
 
 $(BUILD_DIR)/kernel.o: kernel.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/memory.o: memory.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/boot.o: boot.asm | $(BUILD_DIR)

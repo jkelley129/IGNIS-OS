@@ -3,6 +3,11 @@
 #include "drivers/keyboard.h"
 #include "drivers/pit.h"
 #include "shell.h"
+#include "memory.h"
+
+// Define heap area - 1MB heap starting at 2MB
+#define HEAP_START 0x200000
+#define HEAP_SIZE  0x100000  // 1MB
 
 void kernel_main() {
     // Initialize the VGA text mode
@@ -19,16 +24,22 @@ void kernel_main() {
     idt_init();
     vga_puts_color("IDT initialized!\n", (vga_color_attr_t){VGA_COLOR_GREEN, VGA_COLOR_BLACK});
 
+    vga_puts("Initializing Memory...\n");
+    memory_init(HEAP_START, HEAP_SIZE);
+    memory_print_stats();
+    vga_puts("Memory initialized!\n");
+
     vga_puts("Initializing keyboard...\n");
     keyboard_init();
     vga_puts_color("Keyboard initialized!\n", (vga_color_attr_t){VGA_COLOR_GREEN, VGA_COLOR_BLACK});
 
     vga_puts("Initializing PIT\n");
     pit_init(100);
-    vga_puts_color("PIT initialized", (vga_color_attr_t){VGA_COLOR_GREEN, VGA_COLOR_BLACK});
+    vga_puts_color("PIT initialized\n", (vga_color_attr_t){VGA_COLOR_GREEN, VGA_COLOR_BLACK});
 
     vga_puts_color("Ready! System is running.\n", (vga_color_attr_t){VGA_COLOR_GREEN, VGA_COLOR_BLACK});
 
+    //Enable interrupts
     asm volatile("sti");
 
     keyboard_set_callback(shell_handle_char);
