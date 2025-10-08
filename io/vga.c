@@ -1,5 +1,5 @@
 #include "vga.h"
-
+#include "../libc/string.h"
 // Cast to uint64_t first, then to pointer (avoids warnings)
 static uint16_t* vga_buffer = (uint16_t*)(uint64_t)VGA_MEMORY;
 static uint16_t vga_cursor = 0;
@@ -52,6 +52,10 @@ void vga_backspace(int count){
     vga_putc(0);
     vga_cursor--;
   }
+}
+
+void vga_perror(const char* error_str){
+  vga_puts_color(error_str, (vga_color_attr_t){VGA_COLOR_RED, VGA_COLOR_BLACK});
 }
 
 void vga_set_color(vga_color_attr_t color){

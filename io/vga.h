@@ -37,6 +37,7 @@ void vga_putc(char c);
 void vga_puts(const char* str);
 void vga_puts_color(const char* str, vga_color_attr_t);
 void vga_backspace(int count);
+void vga_perror(const char* error_str);
 void vga_set_color(vga_color_attr_t color);
 
 #endif
