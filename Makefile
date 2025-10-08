@@ -16,6 +16,7 @@ OBJS = $(BUILD_DIR)/boot.o \
        $(BUILD_DIR)/vga.o \
        $(BUILD_DIR)/idt.o \
        $(BUILD_DIR)/keyboard.o \
+       $(BUILD_DIR)/pit.o \
        $(BUILD_DIR)/idt_asm.o \
        $(BUILD_DIR)/shell.o \
        $(BUILD_DIR)/string.o
@@ -46,6 +47,9 @@ $(BUILD_DIR)/idt.o: io/idt.c | $(BUILD_DIR)
 $(BUILD_DIR)/keyboard.o: drivers/keyboard.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
+$(BUILD_DIR)/pit.o: drivers/pit.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
 $(BUILD_DIR)/shell.o: shell.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
@@ -63,9 +67,6 @@ clean:
 
 clean_objs:
 	rm -rf $(BUILD_DIR)/*
-
-run_debug:
-	qemu-system-x86_64 -cdrom $(OUTPUT_DIR)/ignis.iso -no-reboot -d int,cpu_reset -no-reboot 2>&1
 
 run:
 	qemu-system-x86_64 -cdrom $(OUTPUT_DIR)/ignis.iso

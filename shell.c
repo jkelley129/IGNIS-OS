@@ -1,6 +1,7 @@
 #include "shell.h"
 #include "io/vga.h"
 #include "libc/string.h"
+#include "drivers/pit.h"
 
 #define CMD_BUFFER_SIZE 256
 
@@ -56,6 +57,41 @@ void cmd_about() {
     vga_puts("A hobby OS written from scratch!\n\n");
 }
 
+void cmd_uptime() {
+    uint64_t ticks = pit_get_ticks();
+    // At 100 Hz, each tick is 10ms, so 100 ticks = 1 second
+    uint64_t total_seconds = ticks / 100;
+    uint64_t hours = total_seconds / 3600;
+    uint64_t minutes = (total_seconds % 3600) / 60;
+    uint64_t seconds = total_seconds % 60;
+
+    char num_str[32];
+
+    vga_puts("\nSystem uptime: ");
+
+    uitoa(hours, num_str);
+    vga_puts(num_str);
+    vga_puts("h ");
+
+    uitoa(minutes, num_str);
+    vga_puts(num_str);
+    vga_puts("m ");
+
+    uitoa(seconds, num_str);
+    vga_puts(num_str);
+    vga_puts("s\n\n");
+}
+
+void cmd_ticks() {
+    uint64_t ticks = pit_get_ticks();
+    char num_str[32];
+
+    vga_puts("\nPIT ticks: ");
+    uitoa(ticks, num_str);
+    vga_puts(num_str);
+    vga_puts("\n\n");
+}
+
 void shell_execute_command(){
     cmd_buffer[cmd_pos] = '\0';
 
@@ -74,6 +110,10 @@ void shell_execute_command(){
         cmd_echo();
     } else if (strcmp(cmd_buffer, "about") == 0) {
         cmd_about();
+    } else if (strcmp(cmd_buffer, "uptime") == 0) {
+        cmd_uptime();
+    } else if (strcmp(cmd_buffer, "ticks") == 0) {
+        cmd_ticks();
     } else {
         vga_puts("\nUnknown command: ");
         vga_puts(cmd_buffer);

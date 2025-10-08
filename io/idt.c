@@ -3,6 +3,7 @@
 
 // External assembly functions
 extern void idt_load(uint64_t);
+extern void irq0();
 extern void irq1();
 extern void irq_default();
 
@@ -46,13 +47,16 @@ void idt_init() {
     outb(0x21, 0x0);
     outb(0xA1, 0x0);
 
-    // Set up keyboard interrupt (IRQ1 = interrupt 33)
+    // Set up PIT interrupt (IRQ0 = interrupt 32)
     // Code segment selector is 0x08 (from GDT)
+    idt_set_gate(32, (uint64_t)irq0, 0x08, 0x8E);
+
+    // Set up keyboard interrupt (IRQ1 = interrupt 33)
     idt_set_gate(33, (uint64_t)irq1, 0x08, 0x8E);
 
     idt_load((uint64_t)&idt_ptr);
 
-    // Mask all IRQs except keyboard (IRQ1)
-    outb(0x21, 0xFD);  // Master PIC: 11111101
+    // Mask all IRQs except PIT (IRQ0) and keyboard (IRQ1)
+    outb(0x21, 0xFC);  // Master PIC: 11111100
     outb(0xA1, 0xFF);  // Slave PIC: 11111111
 }

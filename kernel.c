@@ -1,6 +1,7 @@
 #include "io/vga.h"
 #include "io/idt.h"
 #include "drivers/keyboard.h"
+#include "drivers/pit.h"
 #include "shell.h"
 
 void kernel_main() {
@@ -28,6 +29,10 @@ void kernel_main() {
     vga_puts("Initializing keyboard...\n");
     keyboard_init();
     vga_puts("Keyboard initialized!\n");
+
+    vga_puts("Initializing PIT");
+    pit_init(100);
+    vga_puts("PIT initialized");
 
     vga_puts("Ready! System is running.\n");
 
