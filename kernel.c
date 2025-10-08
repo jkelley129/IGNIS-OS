@@ -20,24 +20,23 @@ void kernel_main() {
     vga_set_color((vga_color_attr_t) {VGA_COLOR_WHITE, VGA_COLOR_BLACK});
 
     // Initialize interrupts and keyboard
-    vga_puts("Initializing IDT...\n");
+    vga_puts("Initializing IDT...  ");
     idt_init();
-    vga_puts_color("IDT initialized!\n", (vga_color_attr_t){VGA_COLOR_GREEN, VGA_COLOR_BLACK});
+    vga_puts_color("[SUCCESS]\n", (vga_color_attr_t){VGA_COLOR_GREEN, VGA_COLOR_BLACK});
 
-    vga_puts("Initializing Memory...\n");
+    vga_puts("Initializing Memory...  ");
     memory_init(HEAP_START, HEAP_SIZE);
-    memory_print_stats();
-    vga_puts("Memory initialized!\n");
+    vga_puts_color("[SUCCESS]\n", (vga_color_attr_t) {VGA_COLOR_GREEN, VGA_COLOR_BLACK});
 
-    vga_puts("Initializing keyboard...\n");
+    vga_puts("Initializing keyboard...  ");
     keyboard_init();
-    vga_puts_color("Keyboard initialized!\n", (vga_color_attr_t){VGA_COLOR_GREEN, VGA_COLOR_BLACK});
+    vga_puts_color("[SUCCESS]\n", (vga_color_attr_t){VGA_COLOR_GREEN, VGA_COLOR_BLACK});
 
-    vga_puts("Initializing PIT\n");
+    vga_puts("Initializing PIT...  ");
     pit_init(100);
-    vga_puts_color("PIT initialized\n", (vga_color_attr_t){VGA_COLOR_GREEN, VGA_COLOR_BLACK});
+    vga_puts_color("[SUCCESS]\n", (vga_color_attr_t){VGA_COLOR_GREEN, VGA_COLOR_BLACK});
 
-    vga_puts_color("Ready! System is running.\n", (vga_color_attr_t){VGA_COLOR_GREEN, VGA_COLOR_BLACK});
+    vga_puts_color("\nReady! System is running.\n", (vga_color_attr_t){VGA_COLOR_GREEN, VGA_COLOR_BLACK});
 
     //Enable interrupts
     asm volatile("sti");
