@@ -36,6 +36,16 @@ void vga_puts(const char* str){
   }
 }
 
+void vga_puts_color(const char* str, vga_color_attr_t color){
+  vga_color_attr_t temp = vga_color;
+  vga_color = color;
+  while (*str){
+    vga_putc(*str);
+    str++;
+  }
+  vga_color = temp;
+}
+
 void vga_backspace(int count){
   vga_cursor--;
   for(int i = 0; i <= count; i++){

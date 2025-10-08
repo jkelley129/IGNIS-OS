@@ -10,31 +10,24 @@ void kernel_main() {
     vga_puts("Welcome!\n");
     vga_set_color((vga_color_attr_t) {VGA_COLOR_RED, VGA_COLOR_BLACK});
     vga_puts("IGNIS v0.0.01\n");
-    vga_set_color((vga_color_attr_t) {VGA_COLOR_GREEN, VGA_COLOR_BLACK});
-    vga_puts("/*** Developed by Josh Kelley ***\\\n\n");
     vga_set_color((vga_color_attr_t) {VGA_COLOR_LIGHT_BLUE, VGA_COLOR_BLACK});
-    vga_puts("--- Feature List ---\n\n");
-    vga_set_color((vga_color_attr_t) {VGA_COLOR_WHITE, VGA_COLOR_BLACK});
-    vga_puts("Colored Text Output\n");
-    vga_puts("Keyboard Input\n\n");
-    vga_set_color((vga_color_attr_t) {VGA_COLOR_BROWN, VGA_COLOR_BLACK});
-    vga_puts("Type something: ");
+    vga_puts("---- Developed by Josh Kelley ----\n\n");
     vga_set_color((vga_color_attr_t) {VGA_COLOR_WHITE, VGA_COLOR_BLACK});
 
     // Initialize interrupts and keyboard
     vga_puts("Initializing IDT...\n");
     idt_init();
-    vga_puts("IDT initialized!\n");
+    vga_puts_color("IDT initialized!\n", (vga_color_attr_t){VGA_COLOR_GREEN, VGA_COLOR_BLACK});
 
     vga_puts("Initializing keyboard...\n");
     keyboard_init();
-    vga_puts("Keyboard initialized!\n");
+    vga_puts_color("Keyboard initialized!\n", (vga_color_attr_t){VGA_COLOR_GREEN, VGA_COLOR_BLACK});
 
-    vga_puts("Initializing PIT");
+    vga_puts("Initializing PIT\n");
     pit_init(100);
-    vga_puts("PIT initialized");
+    vga_puts_color("PIT initialized", (vga_color_attr_t){VGA_COLOR_GREEN, VGA_COLOR_BLACK});
 
-    vga_puts("Ready! System is running.\n");
+    vga_puts_color("Ready! System is running.\n", (vga_color_attr_t){VGA_COLOR_GREEN, VGA_COLOR_BLACK});
 
     asm volatile("sti");
 
