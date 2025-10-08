@@ -2,6 +2,7 @@
 #include "io/vga.h"
 #include "libc/string.h"
 #include "drivers/pit.h"
+#include "memory.h"
 
 #define CMD_BUFFER_SIZE 256
 
@@ -92,6 +93,49 @@ void cmd_ticks() {
     vga_puts("\n\n");
 }
 
+void cmd_meminfo(){
+    memory_print_stats();
+}
+
+void cmd_memtest() {
+    vga_puts("\n=== Memory Allocator Test ===\n");
+
+    vga_puts("Allocating 3 blocks...\n");
+    void* ptr1 = kmalloc(64);
+    void* ptr2 = kmalloc(128);
+    void* ptr3 = kmalloc(256);
+
+    if (ptr1 && ptr2 && ptr3) {
+        vga_puts("Success! Allocated 3 blocks\n");
+
+        vga_puts("Freeing middle block...\n");
+        kfree(ptr2);
+
+        vga_puts("Allocating same size again...\n");
+        void* ptr4 = kmalloc(128);
+
+        if (ptr4) {
+            vga_puts("Success! Reused freed block\n");
+        }
+
+        vga_puts("Testing kcalloc...\n");
+        void* ptr5 = kcalloc(10, 8);
+        if (ptr5) {
+            vga_puts("Success! Allocated zeroed memory\n");
+            kfree(ptr5);
+        }
+
+        vga_puts("Cleaning up...\n");
+        kfree(ptr1);
+        kfree(ptr3);
+        kfree(ptr4);
+
+        vga_puts("Test complete!\n\n");
+    } else {
+        vga_puts("ERROR: Allocation failed!\n\n");
+    }
+}
+
 void shell_execute_command(){
     cmd_buffer[cmd_pos] = '\0';
 
@@ -114,6 +158,10 @@ void shell_execute_command(){
         cmd_uptime();
     } else if (strcmp(cmd_buffer, "ticks") == 0) {
         cmd_ticks();
+    } else if(strcmp(cmd_buffer, "meminfo") == 0) {
+        cmd_meminfo();
+    } else if(strcmp(cmd_buffer, "memtest") == 0) {
+        cmd_memtest();
     } else {
         vga_puts("\nUnknown command: ");
         vga_puts(cmd_buffer);
