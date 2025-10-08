@@ -15,11 +15,16 @@ Ignis is an open source hobby OS meant to gain experience with low level concept
 - grub-mkrescue
 - make
 
+### Required Emulator
+- You must install the QEMU emulator to for this project.
+- It is expected by `make run` to emulate the ignis.iso image created by `make`
+
 ### Getting Started
-Steps:
+**Steps**:
 - Install build dependencies.
 - Clone the repo with `git clone https://github.com/jkelley129/IGNIS-OS.git && cd IGNIS-OS`
 - Compile and package the project with `make` or `make all`
+  - The `Makefile` creates a ignis.iso file in iso/boot/ that is emulated by QEMU
 - Run the QEMU emulator with `make run` or `make run_debug`
 
 ## Contributing
