@@ -103,6 +103,14 @@ file_t* vfs_resolve_path(const char* path){
 }
 
 file_t* vfs_create_file(const char* path){
+
+    for(size_t i = 0; i < strlen(path); i++){
+        if(i == '/' || i == '\\'){
+            vga_perror("Destination path cannot include a / or \\");
+            return 0;
+        }
+    }
+
     char* dir_path = vfs_dirname(path);
     file_t* parent = vfs_resolve_path(dir_path);
 
@@ -243,9 +251,16 @@ int vfs_delete(const char* path){
 }
 
 int vfs_copy_file(const char* dest_path, file_t* source, size_t size){
-    if(strcmp(dest_path, "/")){
-        vga_perror("Cannot overwrite root\n");
+    if(source->type == FILE_TYPE_DIRECTORY){
+        vga_perror("Cannot copy a directory\n");
         return -1;
+    }
+
+    for(size_t i = 0; i < strlen(dest_path); i++){
+        if(i == '/' || i == '\\'){
+            vga_perror("Destination path cannot include a / or \\");
+            return -1;
+        }
     }
 
     file_t* dest_file = vfs_resolve_path(dest_path);
