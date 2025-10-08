@@ -162,6 +162,9 @@ void shell_execute_command(){
         cmd_meminfo();
     } else if(strcmp(cmd_buffer, "memtest") == 0) {
         cmd_memtest();
+    } else if(strcmp(cmd_buffer, "kmalloc") == 0) {
+        kmalloc(1024);
+        vga_putc('\n');
     } else {
         vga_puts("\nUnknown command: ");
         vga_puts(cmd_buffer);
