@@ -20,7 +20,8 @@ OBJS = $(BUILD_DIR)/boot.o \
        $(BUILD_DIR)/idt_asm.o \
        $(BUILD_DIR)/shell.o \
        $(BUILD_DIR)/string.o \
-       $(BUILD_DIR)/memory.o
+       $(BUILD_DIR)/memory.o \
+       $(BUILD_DIR)/vfs.o
 
 all: $(OUTPUT_DIR)/ignis.iso
 
@@ -55,6 +56,9 @@ $(BUILD_DIR)/pit.o: drivers/pit.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/shell.o: shell.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/vfs.o: fs/vfs.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/string.o: libc/string.c | $(BUILD_DIR)

@@ -4,6 +4,7 @@
 #include "drivers/pit.h"
 #include "shell.h"
 #include "mm/memory.h"
+#include "fs/vfs.h"
 
 // Define heap area - 1MB heap starting at 2MB
 #define HEAP_START 0x200000
@@ -28,6 +29,9 @@ void kernel_main() {
     memory_init(HEAP_START, HEAP_SIZE);
     vga_puts_color("[SUCCESS]\n", (vga_color_attr_t) {VGA_COLOR_GREEN, VGA_COLOR_BLACK});
 
+    vga_puts("Initializing RAM File System...  ");
+    vfs_init();
+    vga_puts_color("[SUCCESS]\n", (vga_color_attr_t) {VGA_COLOR_GREEN, VGA_COLOR_BLACK});
     vga_puts("Initializing keyboard...  ");
     keyboard_init();
     vga_puts_color("[SUCCESS]\n", (vga_color_attr_t){VGA_COLOR_GREEN, VGA_COLOR_BLACK});

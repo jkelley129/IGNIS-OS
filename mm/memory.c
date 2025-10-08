@@ -14,13 +14,12 @@ void memory_init(uint64_t start, uint64_t size){
     heap_current = start;
     free_list = 0;
 
-    vga_puts("Memory initialized at 0x");
+    vga_puts("Memory initialized");
     char addr_str[32];
-    vga_puts("???????");
     vga_puts(" with size ");
     uitoa(size / 1024, addr_str);
     vga_puts(addr_str);
-    vga_puts(" KB\n");
+    vga_puts(" KB   ");
 }
 
 void* kmalloc(size_t size){

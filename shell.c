@@ -3,6 +3,7 @@
 #include "libc/string.h"
 #include "drivers/pit.h"
 #include "mm/memory.h"
+#include "fs/vfs.h"
 
 #define CMD_BUFFER_SIZE 256
 
@@ -164,6 +165,15 @@ void shell_execute_command(){
         cmd_memtest();
     } else if(strcmp(cmd_buffer, "kmalloc") == 0) {
         kmalloc(1024);
+        vga_putc('\n');
+    } else if(strcmp(cmd_buffer, "ls") == 0) {
+        vga_putc('\n');
+        vfs_list("/");
+    } else if(strcmp(cmd_buffer, "tree") == 0) {
+        vga_putc('\n');
+        vfs_print_tree(vfs_resolve_path("/"), 1);
+    } else if(strcmp(cmd_buffer, "touch") == 0) {
+        vfs_create_file("/my_file");
         vga_putc('\n');
     } else {
         vga_puts("\nUnknown command: ");
