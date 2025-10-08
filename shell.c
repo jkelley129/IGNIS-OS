@@ -2,7 +2,7 @@
 #include "io/vga.h"
 #include "libc/string.h"
 #include "drivers/pit.h"
-#include "memory.h"
+#include "mm/memory.h"
 
 #define CMD_BUFFER_SIZE 256
 

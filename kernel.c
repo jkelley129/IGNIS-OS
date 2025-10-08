@@ -3,7 +3,7 @@
 #include "drivers/keyboard.h"
 #include "drivers/pit.h"
 #include "shell.h"
-#include "memory.h"
+#include "mm/memory.h"
 
 // Define heap area - 1MB heap starting at 2MB
 #define HEAP_START 0x200000

@@ -1,6 +1,6 @@
 #include "memory.h"
-#include "io/vga.h"
-#include "libc/string.h"
+#include "../io/vga.h"
+#include "../libc/string.h"
 
 
 static uint64_t heap_start = 0;

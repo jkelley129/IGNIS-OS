@@ -33,7 +33,7 @@ iso: $(OBJS)
 $(BUILD_DIR)/kernel.o: kernel.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD_DIR)/memory.o: memory.c | $(BUILD_DIR)
+$(BUILD_DIR)/memory.o: mm/memory.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/boot.o: boot.asm | $(BUILD_DIR)
