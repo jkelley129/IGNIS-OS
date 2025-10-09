@@ -1,6 +1,7 @@
 # Ignis OS
 ## What is Ignis?
-Ignis is an open source hobby OS meant to gain experience with low level concepts and implementations. Note that this is not a Linux distribution, but rather a kernel written from scratch
+Ignis is an open source hobby OS meant to gain experience with low level concepts and implementations. This is a learning project, and I hope to expand it to learn more about all of the concepts. I am using a variety of tools to facilitate my learning, including CPU documentation, hardware docs, and some genAI tools to help me learn. <br>
+This is **NOT** a Linux distribution. It is currently just a kernel(userspace on the way), build from nothing.
 
 ## Technical Description
 - It is designed for 64 bit systems for the x86 instruction set
@@ -49,4 +50,4 @@ Features in rough chronological order of implementation
 - Graphical User Interface(maybe)
 
 ## Contributing
-### Just make a pull request
+Because of the nature of this repository, I would ask anyone to refrain from large PRs implementing a lot of new logic. I want to make IGNIS as best as possible, but I want to learn and implement the core features by myself. If you encounter issues, have some small bug fixes, or code you want to contribute, feel free to make an issue or PR. Just know that I might not immediately merge it if I don't fully understand it. Thank you!
