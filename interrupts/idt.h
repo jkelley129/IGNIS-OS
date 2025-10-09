@@ -1,7 +1,7 @@
 #ifndef IDT_H
 #define IDT_H
 
-#include "../libc/stdint.h"
+#include "libc/stdint.h"
 
 #define IDT_ENTRIES 256
 

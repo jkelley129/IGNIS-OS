@@ -46,7 +46,7 @@ $(BUILD_DIR)/idt_asm.o: idt.asm | $(BUILD_DIR)
 $(BUILD_DIR)/vga.o: io/vga.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD_DIR)/idt.o: io/idt.c | $(BUILD_DIR)
+$(BUILD_DIR)/idt.o: interrupts/idt.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/keyboard.o: drivers/keyboard.c | $(BUILD_DIR)
