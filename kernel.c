@@ -10,6 +10,8 @@
 #define HEAP_START 0x200000
 #define HEAP_SIZE  0x100000  // 1MB
 
+#define COLOR_SUCCESS (vga_color_attr_t){VGA_COLOR_GREEN, VGA_COLOR_BLACK}
+
 void kernel_main() {
     // Initialize the VGA text mode
     vga_init();
@@ -23,24 +25,24 @@ void kernel_main() {
     // Initialize interrupts and keyboard
     vga_puts("Initializing IDT...  ");
     idt_init();
-    vga_puts_color("[SUCCESS]\n", (vga_color_attr_t){VGA_COLOR_GREEN, VGA_COLOR_BLACK});
+    vga_puts_color("[SUCCESS]\n", COLOR_SUCCESS);
 
     vga_puts("Initializing Memory...  ");
     memory_init(HEAP_START, HEAP_SIZE);
-    vga_puts_color("[SUCCESS]\n", (vga_color_attr_t) {VGA_COLOR_GREEN, VGA_COLOR_BLACK});
+    vga_puts_color("[SUCCESS]\n", COLOR_SUCCESS);
 
     vga_puts("Initializing RAM File System...  ");
     vfs_init();
-    vga_puts_color("[SUCCESS]\n", (vga_color_attr_t) {VGA_COLOR_GREEN, VGA_COLOR_BLACK});
+    vga_puts_color("[SUCCESS]\n", COLOR_SUCCESS);
     vga_puts("Initializing keyboard...  ");
     keyboard_init();
-    vga_puts_color("[SUCCESS]\n", (vga_color_attr_t){VGA_COLOR_GREEN, VGA_COLOR_BLACK});
+    vga_puts_color("[SUCCESS]\n", COLOR_SUCCESS);
 
     vga_puts("Initializing PIT...  ");
     pit_init(100);
-    vga_puts_color("[SUCCESS]\n", (vga_color_attr_t){VGA_COLOR_GREEN, VGA_COLOR_BLACK});
+    vga_puts_color("[SUCCESS]\n", COLOR_SUCCESS);
 
-    vga_puts_color("\nReady! System is running.\n", (vga_color_attr_t){VGA_COLOR_GREEN, VGA_COLOR_BLACK});
+    vga_puts_color("\nReady! System is running.\n", COLOR_SUCCESS);
 
     //Enable interrupts
     asm volatile("sti");
