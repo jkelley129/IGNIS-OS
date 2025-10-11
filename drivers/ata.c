@@ -3,7 +3,7 @@
 #include "../io/ports.h"
 #include "../io/vga.h"
 #include "../libc/string.h"
-#include "../mm/memory.h"
+#include "../error_handling/errno.h"
 
 typedef struct {
     uint16_t base;// Base I/O port
@@ -20,16 +20,16 @@ static void ata_wait_busy(uint16_t base){
 }
 
 //Helper function to wait for data to be ready
-static int ata_wait_drq(uint16_t base){
+static kerr_t ata_wait_drq(uint16_t base){
     uint8_t status;
     int timeout = 1000000;
 
     while(timeout--){
         status = inb(base + 7);
-        if(status & ATA_SR_ERR) return -1;
-        if(status & ATA_SR_DRQ) return 0;
+        if(status & ATA_SR_ERR) return E_HARDWARE;
+        if(status & ATA_SR_DRQ) return E_OK;
     }
-    return -2;
+    return E_TIMEOUT;
 }
 
 // Delay 400ns by reading 4 times(best approximation)
@@ -49,7 +49,7 @@ static void ata_select_drive_and_lba(uint16_t base, uint8_t drive, uint64_t lba)
     outb(base + 7, ATA_CMD_WRITE_PIO);
 }
 
-static int ata_read_block_op(block_device_t* dev, uint64_t lba, uint8_t* buffer){
+static kerr_t ata_read_block_op(block_device_t* dev, uint64_t lba, uint8_t* buffer){
     ata_device_data_t* ata_data = (ata_device_data_t*)dev->driver_data;
     uint16_t base = ata_data->base;
 
@@ -61,7 +61,7 @@ static int ata_read_block_op(block_device_t* dev, uint64_t lba, uint8_t* buffer)
 
     // Wait for data to be ready
     if(ata_wait_drq(base) != 0){
-        return -1;
+        return E_HARDWARE;
     }
 
     //Read data
@@ -70,10 +70,10 @@ static int ata_read_block_op(block_device_t* dev, uint64_t lba, uint8_t* buffer)
         buf16[i] = inw(base);
     }
 
-    return 0;
+    return E_OK;
 }
 
-static int ata_write_block_op(block_device_t* dev, uint64_t lba, const uint8_t* buffer){
+static kerr_t ata_write_block_op(block_device_t* dev, uint64_t lba, const uint8_t* buffer){
     ata_device_data_t* ata_data = (ata_device_data_t*)dev->driver_data;
     uint16_t base = ata_data->base;
 
@@ -83,7 +83,7 @@ static int ata_write_block_op(block_device_t* dev, uint64_t lba, const uint8_t* 
     ata_select_drive_and_lba(base,ata_data->drive,lba);
 
     if(ata_wait_drq(base) != 0){
-        return -1;
+        return E_HARDWARE;
     }
 
     const uint16_t* buf16 = (const uint16_t*)buffer;
@@ -96,10 +96,10 @@ static int ata_write_block_op(block_device_t* dev, uint64_t lba, const uint8_t* 
     outb(base + 7, ATA_CMD_CACHE_FLUSH);
     ata_wait_busy(base);
 
-    return 0;
+    return E_OK;
 }
 
-static int ata_flush_op(block_device_t* dev){
+static kerr_t ata_flush_op(block_device_t* dev){
     ata_device_data_t* ata_data = (ata_device_data_t*)dev->driver_data;
     uint16_t base = ata_data->base;
 
@@ -107,7 +107,7 @@ static int ata_flush_op(block_device_t* dev){
     outb(base + 7, ATA_CMD_CACHE_FLUSH);
     ata_wait_busy(base);
 
-    return 0;
+    return E_OK;
 }
 
 static const block_device_ops_t ata_ops = {
@@ -118,7 +118,7 @@ static const block_device_ops_t ata_ops = {
         .flush = ata_flush_op
 };
 
-static int ata_identify(uint8_t drive_num){
+static kerr_t ata_identify(uint8_t drive_num){
     ata_device_data_t* ata_data = &ata_device_data[drive_num];
     uint16_t base = ata_data->base;
     uint8_t drive_sel = ata_data->drive;
@@ -134,7 +134,7 @@ static int ata_identify(uint8_t drive_num){
     // Check if drive exists
     uint8_t status = inb(base + 7);
     if (status == 0) {
-        return -1;
+        return E_EXISTS;
     }
 
     //Wait for BSY to clear
@@ -142,12 +142,12 @@ static int ata_identify(uint8_t drive_num){
 
     // Check LBA mid and high - if non-zero, not ATA
     if (inb(base + 4) != 0 || inb(base + 5) != 0) {
-        return -1;
+        return E_NOTFOUND;
     }
 
     // Wait for DRQ or ERR
     if (ata_wait_drq(base) != 0) {
-        return -1;
+        return E_HARDWARE;
     }
 
     // Read identification data
@@ -178,7 +178,7 @@ static int ata_identify(uint8_t drive_num){
 
     block_register_device(block_dev);
 
-    return 0;
+    return E_OK;
 }
 
 void ata_init() {

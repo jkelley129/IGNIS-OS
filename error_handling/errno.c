@@ -9,7 +9,9 @@ const char* k_strerror(kerr_t err){
         case E_EXISTS: return "Already exists";
         case E_NOTDIR: return "Not a directory";
         case E_ISDIR: return "Is a directory";
+        case E_TIMEOUT: return "Operation Timed Out";
         case E_PERM: return "Permission denied";
+        case E_HARDWARE: return "Hardware fault";
     }
 }
 
