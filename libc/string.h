@@ -2,13 +2,7 @@
 #define STRING_H
 
 #include "stdint.h"
-
-// Define size_t for 64-bit
-#ifdef __LP64__
-typedef unsigned long size_t;
-#else
-typedef unsigned int size_t;
-#endif
+#include "stddef.h"
 
 size_t strlen(const char* str);
 int strcmp(const char* s1, const char* s2);
