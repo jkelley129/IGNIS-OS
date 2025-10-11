@@ -60,7 +60,7 @@ $(BUILD_DIR)/pit.o: drivers/pit.c | $(BUILD_DIR)
 $(BUILD_DIR)/block.o: drivers/block.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD_DIR)/ata.o: drivers/ata.c | $(BUILD_DIR)
+$(BUILD_DIR)/ata.o: drivers/disks/ata.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/shell.o: shell.c | $(BUILD_DIR)

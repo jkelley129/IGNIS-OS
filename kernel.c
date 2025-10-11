@@ -3,7 +3,7 @@
 #include "drivers/keyboard.h"
 #include "drivers/pit.h"
 #include "drivers/block.h"
-#include "drivers/ata.h"
+#include "drivers/disks/ata.h"
 #include "shell.h"
 #include "mm/memory.h"
 #include "fs/vfs.h"

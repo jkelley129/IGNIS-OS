@@ -1,9 +1,9 @@
 #include "ata.h"
-#include "block.h"
-#include "../io/ports.h"
-#include "../io/vga.h"
-#include "../libc/string.h"
-#include "../error_handling/errno.h"
+#include "../block.h"
+#include "../../io/ports.h"
+#include "../../io/vga.h"
+#include "../../libc/string.h"
+#include "../../error_handling/errno.h"
 
 typedef struct {
     uint16_t base;// Base I/O port
