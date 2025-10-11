@@ -3,7 +3,7 @@
 #include "drivers/keyboard.h"
 #include "drivers/pit.h"
 #include "drivers/block.h"
-#include "drivers/disks/ata.h"
+#include "drivers/disks/nvme.h"
 #include "shell.h"
 #include "mm/memory.h"
 #include "fs/vfs.h"
@@ -48,8 +48,8 @@ void kernel_main() {
     block_init();
     vga_puts_color("[SUCCESS]\n",COLOR_SUCCESS);
 
-    vga_puts("Initializing ATA...   ");
-    ata_init();
+    vga_puts("Initializing NVMe...   ");
+    nvme_init();
     vga_puts_color("[SUCCESS]\n", COLOR_SUCCESS);
 
     vga_puts_color("\nReady! System is running.\n", COLOR_SUCCESS);

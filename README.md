@@ -39,11 +39,10 @@ Features in rough chronological order of implementation
 - Agnostic block device I/O layer
 - Block device drivers
   - ATA
+  - NVMe
 
 ## Features I hope to add
-- Disk drivers for persistent storage( IN PROGRESS )
-  - AHCI
-  - NVMe
+- (TEST) Disk drivers for persistent storage( IN PROGRESS )
 - Modularize structure and drivers ( NEXT TASK )
   - Decouple vga from everything
   - Separate ramfs and vfs

@@ -23,7 +23,8 @@ OBJS = $(BUILD_DIR)/boot.o \
        $(BUILD_DIR)/memory.o \
        $(BUILD_DIR)/vfs.o \
        $(BUILD_DIR)/block.o \
-       $(BUILD_DIR)/ata.o
+       $(BUILD_DIR)/ata.o \
+       $(BUILD_DIR)/nvme.o
 
 all: $(OUTPUT_DIR)/ignis.iso
 
@@ -61,6 +62,9 @@ $(BUILD_DIR)/block.o: drivers/block.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/ata.o: drivers/disks/ata.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/nvme.o: drivers/disks/nvme.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/shell.o: shell.c | $(BUILD_DIR)
