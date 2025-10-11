@@ -26,7 +26,7 @@ This is **NOT** a Linux distribution. It is currently just a kernel(userspace on
 - Clone the repo with `git clone https://github.com/jkelley129/IGNIS-OS.git && cd IGNIS-OS`
 - Compile and package the project with `make` or `make all`
   - The `Makefile` creates a ignis.iso file in iso/boot/ that is emulated by QEMU
-- Run the QEMU emulator with `make run` or `make run_debug`
+- Run the QEMU emulator with `make run`
 
 ## Current Features
 Features in rough chronological order of implementation
@@ -36,10 +36,21 @@ Features in rough chronological order of implementation
 - Programmable Interval Timer with interrupt handling
 - Custom memory allocator, with a simple free list implementation
 - In-memory filesystem with simple utilities(create, list, copy, delete, etc.)
+- Agnostic block device I/O layer
+- Block device drivers
+  - ATA
 
 ## Features I hope to add
-- Disk driver for persistent storage
-- Implementation of an on-disk filesystem
+- Disk drivers for persistent storage( IN PROGRESS )
+  - AHCI
+  - NVMe
+- Modularize structure and drivers ( NEXT TASK )
+  - Decouple vga from everything
+  - Separate ramfs and vfs
+  - Implement the error handling
+  - Add generic driver registration system
+  - Decouple static global state
+- Implementation of an on-disk filesystem ( PROJECTED NEXT TASK )
 - More standard filesystem(FAT32, or other)
 - More device drivers for more devices
 - Audio integration
