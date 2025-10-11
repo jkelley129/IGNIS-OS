@@ -2,6 +2,8 @@
 #include "interrupts/idt.h"
 #include "drivers/keyboard.h"
 #include "drivers/pit.h"
+#include "drivers/block.h"
+#include "drivers/ata.h"
 #include "shell.h"
 #include "mm/memory.h"
 #include "fs/vfs.h"
@@ -42,6 +44,14 @@ void kernel_main() {
     pit_init(100);
     vga_puts_color("[SUCCESS]\n", COLOR_SUCCESS);
 
+    vga_puts("Initializing Block Device Layer...   ");
+    block_init();
+    vga_puts_color("[SUCCESS]\n",COLOR_SUCCESS);
+
+    vga_puts("Initializing ATA...   ");
+    ata_init();
+    vga_puts_color("[SUCCESS]\n", COLOR_SUCCESS);
+
     vga_puts_color("\nReady! System is running.\n", COLOR_SUCCESS);
 
     //Enable interrupts
@@ -50,7 +60,7 @@ void kernel_main() {
     keyboard_set_callback(shell_handle_char);
     shell_init();
 
-    // Infinite loop - interrupts will handle keyboard input
+    // Infinite loop - interrupts will handle all input for now
     while(1) {
         asm volatile("hlt");
     }

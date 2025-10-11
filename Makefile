@@ -21,7 +21,9 @@ OBJS = $(BUILD_DIR)/boot.o \
        $(BUILD_DIR)/shell.o \
        $(BUILD_DIR)/string.o \
        $(BUILD_DIR)/memory.o \
-       $(BUILD_DIR)/vfs.o
+       $(BUILD_DIR)/vfs.o \
+       $(BUILD_DIR)/block.o \
+       $(BUILD_DIR)/ata.o
 
 all: $(OUTPUT_DIR)/ignis.iso
 
@@ -53,6 +55,12 @@ $(BUILD_DIR)/keyboard.o: drivers/keyboard.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/pit.o: drivers/pit.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/block.o: drivers/block.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/ata.o: drivers/ata.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/shell.o: shell.c | $(BUILD_DIR)

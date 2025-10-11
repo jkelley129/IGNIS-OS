@@ -26,7 +26,7 @@ int block_register_device(block_device_t* device){
     return device->id;
 }
 
-block_device_t* get_block_device(uint8_t id){
+block_device_t* block_get_device(uint8_t id){
     if(id >= device_count){
         return 0;
     }
@@ -87,7 +87,7 @@ void block_list_devices(){
 
 // Generic I/O operations
 int block_read(uint8_t device_id, uint64_t lba, uint8_t* buffer){
-    block_device_t* dev = get_block_device(device_id);
+    block_device_t* dev = block_get_device(device_id);
     if(dev == 0) return -1;
 
     //Check if valid
@@ -100,7 +100,7 @@ int block_read(uint8_t device_id, uint64_t lba, uint8_t* buffer){
 }
 
 int block_write(uint8_t device_id, uint64_t lba, const uint8_t* buffer){
-    block_device_t* dev = get_block_device(device_id);
+    block_device_t* dev = block_get_device(device_id);
     if(dev == 0) return -1;
 
     //Check if valid
