@@ -39,18 +39,6 @@ static void ata_io_wait(uint8_t base){
     }
 }
 
-//Read word from I/O port
-static inline uint16_t inw(uint16_t port){
-    uint16_t result;
-    asm volatile("inw %1, %0" : "=a"(result) : "Nd"(port));
-    return result;
-}
-
-//Write a word from an I/O port
-static inline void outw(uint16_t port, uint16_t data){
-    asm volatile("outw %0, %1" : : "a"(data), "Nd"(port));
-}
-
 static void ata_select_drive_and_lba(uint16_t base, uint8_t drive, uint64_t lba){
     // Select drive and set LBA mode
     outb(base + 6, (drive == ATA_MASTER ? 0xE0 : 0xF0) | ((lba >> 24) & 0x0F));
