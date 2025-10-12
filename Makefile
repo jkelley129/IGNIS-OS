@@ -67,7 +67,7 @@ $(BUILD_DIR)/ata.o: drivers/disks/ata.c | $(BUILD_DIR)
 $(BUILD_DIR)/nvme.o: drivers/disks/nvme.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD_DIR)/shell.o: shell.c | $(BUILD_DIR)
+$(BUILD_DIR)/shell.o: shell/shell.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/vfs.o: fs/vfs.c | $(BUILD_DIR)
@@ -83,7 +83,7 @@ $(OUTPUT_DIR):
 	@mkdir -p $@
 
 clean:
-	rm -rf $(BUILD_DIR)/* $(OUTPUT_DIR)/* iso/boot/kernel.elf
+	rm -rf $(BUILD_DIR) $(OUTPUT_DIR) iso/boot/kernel.elf
 
 clean_objs:
 	rm -rf $(BUILD_DIR)/*

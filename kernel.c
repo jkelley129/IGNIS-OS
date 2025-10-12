@@ -4,7 +4,7 @@
 #include "drivers/pit.h"
 #include "drivers/block.h"
 #include "drivers/disks/nvme.h"
-#include "shell.h"
+#include "shell/shell.h"
 #include "mm/memory.h"
 #include "fs/vfs.h"
 
