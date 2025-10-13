@@ -1,5 +1,6 @@
 #include "keyboard.h"
 #include "../io/vga.h"
+#include "error_handling/errno.h"
 
 // US QWERTY keyboard layout scancode to ASCII
 static const char scancode_to_ascii[] = {
@@ -21,8 +22,9 @@ static const char scancode_to_ascii_shift[] = {
 static uint8_t shift_pressed = 0;
 static keyboard_callback_t key_callback = 0;
 
-void keyboard_init() {
+kerr_t keyboard_init() {
     // Keyboard is initialized by the BIOS, nothing needed
+    return E_OK;
 }
 
 void keyboard_set_callback(keyboard_callback_t callback) {

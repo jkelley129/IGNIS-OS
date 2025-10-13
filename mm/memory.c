@@ -1,6 +1,7 @@
 #include "memory.h"
 #include "../io/vga.h"
 #include "../libc/string.h"
+#include "error_handling/errno.h"
 
 
 static uint64_t heap_start = 0;
@@ -8,7 +9,7 @@ static uint64_t heap_end = 0;
 static uint64_t heap_current = 0;
 static memory_block_t* free_list = 0;
 
-void memory_init(uint64_t start, uint64_t size){
+kerr_t memory_init(uint64_t start, uint64_t size){
     heap_start = start;
     heap_end = start + size;
     heap_current = start;
@@ -20,6 +21,8 @@ void memory_init(uint64_t start, uint64_t size){
     uitoa(size / 1024, addr_str);
     vga_puts(addr_str);
     vga_puts(" KB   ");
+
+    return E_OK;
 }
 
 void* kmalloc(size_t size){

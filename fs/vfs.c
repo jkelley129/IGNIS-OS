@@ -2,10 +2,11 @@
 #include "../libc/stddef.h"
 #include "../mm/memory.h"
 #include "../io/vga.h"
+#include "error_handling/errno.h"
 
 static file_t* root = NULL;
 
-void vfs_init() {
+kerr_t vfs_init() {
     // Create root directory
     root = (file_t*) kmalloc(sizeof(file_t));
     strcpy(root->name, "/");
@@ -15,6 +16,8 @@ void vfs_init() {
     root->next = NULL;
     root->first_child = NULL;
     root->parent = NULL;
+
+    return E_OK;
 }
 
 const char* vfs_basename(const char* path){

@@ -189,7 +189,7 @@ static kerr_t ata_identify(uint8_t drive_num){
     return E_OK;
 }
 
-void ata_init() {
+kerr_t ata_init() {
 
     // Initialize ATA device data
     // Primary master
@@ -229,4 +229,5 @@ void ata_init() {
             vga_puts(" MB)\n");
         }
     }
+    return E_OK;
 }

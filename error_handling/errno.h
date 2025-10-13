@@ -31,5 +31,19 @@ const char* k_strerror(kerr_t err);
     if (_err != ERR_OK) return _err; \
 } while (0)
 
+#define TRY_INIT(name, expr, err_count) do { \
+    vga_puts("Initializing ");    \
+    vga_puts(name);               \
+    vga_puts("...   ");           \
+    kerr_t status = expr;         \
+    if(status == E_OK) vga_puts_color("[SUCCESS]\n", COLOR_SUCCESS); \
+    else{                         \
+        vga_puts_color("[FAILED: ", COLOR_FAILURE);                \
+        vga_puts(k_strerror(status));        \
+        vga_putc('\n');                                     \
+        err_count++;              \
+    }                             \
+}while(0);
+
 
 #endif

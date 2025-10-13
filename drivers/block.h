@@ -42,7 +42,7 @@ typedef struct block_device {
 } block_device_t;
 
 // Block device manager functions
-void block_init();
+kerr_t block_init();
 int block_register_device(block_device_t* device);
 block_device_t* block_get_device(uint8_t id);
 uint8_t block_get_device_count();

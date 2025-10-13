@@ -3,6 +3,7 @@
 
 #include "../libc/stdint.h"
 #include "../libc/string.h"
+#include "error_handling/errno.h"
 
 #define MAX_FILENAME 64
 #define MAX_PATH 256
@@ -25,7 +26,7 @@ typedef struct file {
 } file_t;
 
 // VFS operations
-void vfs_init();
+kerr_t vfs_init();
 file_t* vfs_create_file(const char* path);
 file_t* vfs_create_directory(const char* path);
 file_t* vfs_open(const char* path);

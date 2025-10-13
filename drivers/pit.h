@@ -2,6 +2,7 @@
 #define PIT_H
 
 #include "../libc/stdint.h"
+#include "error_handling/errno.h"
 
 #define PIT_FREQUENCY 1193182  // Base frequency of PIT in Hz
 #define PIT_CHANNEL0 0x40
@@ -30,7 +31,7 @@
 
 typedef void (*pit_callback_t)(void);
 
-void pit_init(uint32_t frequency);
+kerr_t pit_init(uint32_t frequency);
 void pit_set_callback(pit_callback_t callback);
 uint64_t pit_get_ticks(void);
 void pit_handler(void);

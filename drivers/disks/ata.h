@@ -2,6 +2,7 @@
 #define ATA_H
 
 #include "../../libc/stdint.h"
+#include "../../error_handling/errno.h"
 
 // ATA I/O Ports (Primary Bus)
 #define ATA_PRIMARY_DATA       0x1F0
@@ -74,6 +75,6 @@ typedef struct {
 
 // Function declarations
 // Only initialization is exposed - all I/O goes through block device abstraction
-void ata_init();
+kerr_t ata_init();
 
 #endif

@@ -1,5 +1,6 @@
 #include "idt.h"
 #include "ports.h"
+#include "error_handling/errno.h"
 
 // External assembly functions
 extern void idt_load(uint64_t);
@@ -20,7 +21,7 @@ void idt_set_gate(uint8_t num, uint64_t base, uint16_t sel, uint8_t flags) {
     idt[num].reserved = 0;
 }
 
-void idt_init() {
+kerr_t idt_init() {
     idt_ptr.limit = (sizeof(idt_entry_t) * IDT_ENTRIES) - 1;
     idt_ptr.base = (uint64_t)&idt;
 
@@ -59,4 +60,6 @@ void idt_init() {
     // Mask all IRQs except PIT (IRQ0) and keyboard (IRQ1)
     outb(0x21, 0xFC);  // Master PIC: 11111100
     outb(0xA1, 0xFF);  // Slave PIC: 11111111
+
+    return E_OK;
 }

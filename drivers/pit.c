@@ -1,10 +1,11 @@
 #include "pit.h"
 #include "../io/ports.h"
+#include "error_handling/errno.h"
 
 static volatile uint64_t pit_ticks = 0;
 static pit_callback_t tick_callback = 0;
 
-void pit_init(uint32_t frequency) {
+kerr_t pit_init(uint32_t frequency) {
     // Calculate the divisor for the desired frequency
     uint32_t divisor = PIT_FREQUENCY / frequency;
 
@@ -22,6 +23,8 @@ void pit_init(uint32_t frequency) {
     outb(PIT_CHANNEL0, (uint8_t)((divisor >> 8) & 0xFF));
 
     pit_ticks = 0;
+
+    return E_OK;
 }
 
 void pit_set_callback(pit_callback_t callback) {

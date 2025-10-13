@@ -2,6 +2,7 @@
 #define IDT_H
 
 #include "libc/stdint.h"
+#include "error_handling/errno.h"
 
 #define IDT_ENTRIES 256
 
@@ -21,7 +22,7 @@ typedef struct {
     uint64_t base;          // Changed from uint32_t to uint64_t
 } __attribute__((packed)) idt_ptr_t;
 
-void idt_init();
+kerr_t idt_init();
 void idt_set_gate(uint8_t num, uint64_t base, uint16_t sel, uint8_t flags);
 
 #endif

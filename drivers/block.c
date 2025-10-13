@@ -7,11 +7,12 @@
 static block_device_t* block_devices[MAX_BLOCK_DEVICES];
 static uint8_t device_count = 0;
 
-void block_init(){
+kerr_t block_init(){
     for(int i = 0; i < MAX_BLOCK_DEVICES; i++){
         block_devices[i] = 0;
     }
     device_count = 0;
+    return E_OK;
 }
 
 int block_register_device(block_device_t* device){

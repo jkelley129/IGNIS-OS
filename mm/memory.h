@@ -3,6 +3,7 @@
 
 #include "../libc/stdint.h"
 #include "../libc/stddef.h"
+#include "error_handling/errno.h"
 
 // Memory region structure
 typedef struct {
@@ -22,7 +23,7 @@ typedef struct memory_block {
 #define MEMORY_BLOCK_HEADER_SIZE sizeof(memory_block_t)
 
 // Memory allocator functions
-void memory_init(uint64_t heap_start, uint64_t heap_size);
+kerr_t memory_init(uint64_t heap_start, uint64_t heap_size);
 void* kmalloc(size_t size);
 void kfree(void* ptr);
 void* kcalloc(size_t num, size_t size);
