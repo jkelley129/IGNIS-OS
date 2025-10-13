@@ -5,7 +5,7 @@
 #include "drivers/block.h"
 #include "mm/memory.h"
 #include "fs/vfs.h"
-#include "../error_handling/errno.h"
+#include "error_handling/errno.h"
 
 #define CMD_BUFFER_SIZE 256
 
@@ -118,9 +118,9 @@ void cmd_echo(int argc, char** argv) {
 void cmd_about(int argc, char** argv) {
     vga_puts("\n");
     vga_set_color((vga_color_attr_t){VGA_COLOR_LIGHT_CYAN, VGA_COLOR_BLACK});
-    vga_puts("╔════════════════════════════════════╗\n");
-    vga_puts("║       IGNIS Operating System       ║\n");
-    vga_puts("╚════════════════════════════════════╝\n");
+    vga_puts(" v=====================================v\n");
+    vga_puts("[%]       IGNIS Operating System      [%]\n");
+    vga_puts(" ^=====================================^\n");
     vga_set_color((vga_color_attr_t){VGA_COLOR_WHITE, VGA_COLOR_BLACK});
     vga_puts("\n");
     vga_puts("Version:     0.0.01 (64-bit)\n");
@@ -129,15 +129,15 @@ void cmd_about(int argc, char** argv) {
     vga_puts("Description: A hobby OS written from scratch\n");
     vga_puts("\n");
     vga_puts("Features:\n");
-    vga_puts("  • VGA text mode output\n");
-    vga_puts("  • Interrupt handling (IDT)\n");
-    vga_puts("  • Keyboard driver\n");
-    vga_puts("  • PIT timer\n");
-    vga_puts("  • Memory allocator\n");
-    vga_puts("  • In-memory filesystem (VFS)\n");
-    vga_puts("  • Block device layer\n");
-    vga_puts("  • ATA disk driver\n");
-    vga_puts("  • NVMe disk driver\n");
+    vga_puts("  - VGA text mode output\n");
+    vga_puts("  - Interrupt handling (IDT)\n");
+    vga_puts("  - Keyboard driver\n");
+    vga_puts("  - PIT timer\n");
+    vga_puts("  - Memory allocator\n");
+    vga_puts("  - In-memory filesystem (VFS)\n");
+    vga_puts("  - Block device layer\n");
+    vga_puts("  - ATA disk driver\n");
+    vga_puts("  - NVMe disk driver(WiP)\n");
     vga_puts("\n");
 }
 
