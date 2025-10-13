@@ -5,6 +5,7 @@
 #include "drivers/block.h"
 #include "mm/memory.h"
 #include "fs/vfs.h"
+#include "../error_handling/errno.h"
 
 #define CMD_BUFFER_SIZE 256
 
@@ -513,13 +514,18 @@ void cmd_blkwrite(int argc, char** argv) {
     vga_puts(num_str);
     vga_puts("...\n");
 
-    if (block_write(dev_id, lba, buffer) == 0) {
+    kerr_t blk_write_status = block_write(dev_id, lba, buffer);
+
+    if (blk_write_status == 0) {
         vga_set_color((vga_color_attr_t){VGA_COLOR_GREEN, VGA_COLOR_BLACK});
-        vga_puts("✓ Write successful\n\n");
+        vga_puts("Write successful\n\n");
         vga_set_color((vga_color_attr_t){VGA_COLOR_WHITE, VGA_COLOR_BLACK});
     } else {
         vga_set_color((vga_color_attr_t){VGA_COLOR_RED, VGA_COLOR_BLACK});
-        vga_puts("✗ Write failed\n\n");
+        vga_puts("Write failed with error");
+        k_strerror(blk_write_status);
+        vga_puts(k_strerror(blk_write_status));
+        vga_puts("\n\n");
         vga_set_color((vga_color_attr_t){VGA_COLOR_WHITE, VGA_COLOR_BLACK});
     }
 

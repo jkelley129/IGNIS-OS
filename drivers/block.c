@@ -88,13 +88,13 @@ void block_list_devices(){
 // Generic I/O operations
 int block_read(uint8_t device_id, uint64_t lba, uint8_t* buffer){
     block_device_t* dev = block_get_device(device_id);
-    if(dev == 0) return -1;
+    if(dev == 0) return E_NOTFOUND;
 
     //Check if valid
-    if(!dev || !dev->present || dev->ops || !dev->ops->read_block) return -1;
+    if(!dev || !dev->present || !dev->ops || !dev->ops->read_block) return E_INVALID;
 
     //Check if lba is out of range
-    if(lba >= dev->block_count) return -2;
+    if(lba >= dev->block_count) return E_EXISTS;
 
     return dev->ops->read_block(dev, lba, buffer);
 }
@@ -104,7 +104,7 @@ int block_write(uint8_t device_id, uint64_t lba, const uint8_t* buffer){
     if(dev == 0) return -1;
 
     //Check if valid
-    if(!dev || !dev->present || dev->ops || !dev->ops->write_block) return -2;
+    if(!dev || !dev->present || !dev->ops || !dev->ops->write_block) return -2;
 
     //Check if lba is out of range
     if(lba >= dev->block_count) return -3;

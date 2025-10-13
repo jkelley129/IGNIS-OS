@@ -54,14 +54,14 @@ static inline uint32_t pci_get_address(uint8_t bus, uint8_t slot, uint8_t func, 
 //PCI configuration space access
 static uint32_t pci_read_config(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset){
     uint32_t address = pci_get_address(bus,slot,func,offset);
-    outb(PCI_CONFIG_ADDRESS, address);
-    return inb(PCI_CONFIG_DATA + (offset & 3));
+    outl(PCI_CONFIG_ADDRESS, address);
+    return inl(PCI_CONFIG_DATA + (offset & 3));
 }
 
 static void pci_write_config(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset, uint32_t value){
     uint32_t address = pci_get_address(bus, slot, func, offset);
-    outb(PCI_CONFIG_ADDRESS, address);
-    outb(PCI_CONFIG_DATA + (offset & 3), value);
+    outl(PCI_CONFIG_ADDRESS, address);
+    outl(PCI_CONFIG_DATA + (offset & 3), value);
 }
 
 
@@ -367,7 +367,7 @@ kerr_t nvme_init() {
     // Identify controller
     nvme_identify_controller_t ctrl_id;
     if (nvme_identify_controller(&nvme_ctrl, &ctrl_id) != E_OK) {
-        return E_NOTFOUND;
+        return E_NOTDIR;
     }
 
     nvme_ctrl.num_namespaces = ctrl_id.nn;

@@ -39,14 +39,16 @@ static void ata_io_wait(uint8_t base){
     }
 }
 
-static void ata_select_drive_and_lba(uint16_t base, uint8_t drive, uint64_t lba){
+static void ata_select_drive_and_lba(uint16_t base, uint8_t drive, uint64_t lba, uint8_t command){
     // Select drive and set LBA mode
     outb(base + 6, (drive == ATA_MASTER ? 0xE0 : 0xF0) | ((lba >> 24) & 0x0F));
+    ata_io_wait(base);
+
     outb(base + 2, 1);  // Sector count
     outb(base + 3, (uint8_t)lba);
     outb(base + 4, (uint8_t)(lba >> 8));
     outb(base + 5, (uint8_t)(lba >> 16));
-    outb(base + 7, ATA_CMD_WRITE_PIO);
+    outb(base + 7, command);
 }
 
 static kerr_t ata_read_block_op(block_device_t* dev, uint64_t lba, uint8_t* buffer){
@@ -56,11 +58,11 @@ static kerr_t ata_read_block_op(block_device_t* dev, uint64_t lba, uint8_t* buff
     //Wait for drive to be ready
     ata_wait_busy(base);
 
-    //Select drive and set LBA mode
-    ata_select_drive_and_lba(base, ata_data->drive, lba);
+    //Select drive and set LBA mode, send READ command
+    ata_select_drive_and_lba(base, ata_data->drive, lba, ATA_CMD_READ_PIO);
 
     // Wait for data to be ready
-    if(ata_wait_drq(base) != 0){
+    if(ata_wait_drq(base) != E_OK){
         return E_HARDWARE;
     }
 
@@ -80,16 +82,22 @@ static kerr_t ata_write_block_op(block_device_t* dev, uint64_t lba, const uint8_
     //Wait for drive to be ready
     ata_wait_busy(base);
 
-    ata_select_drive_and_lba(base,ata_data->drive,lba);
+    //Select drive and set LBA mode, send WRITE command
+    ata_select_drive_and_lba(base, ata_data->drive, lba, ATA_CMD_WRITE_PIO);
 
-    if(ata_wait_drq(base) != 0){
+    // Wait for drive to be ready for data
+    if(ata_wait_drq(base) != E_OK){
         return E_HARDWARE;
     }
 
+    //Write data
     const uint16_t* buf16 = (const uint16_t*)buffer;
     for(int i = 0; i < 256; i++){
         outw(base, buf16[i]);
     }
+
+    // Wait for write to complete
+    ata_wait_busy(base);
 
     // Flush cache
     outb(base + 6, ata_data->drive == ATA_MASTER ? 0xE0 : 0xF0);
@@ -134,7 +142,7 @@ static kerr_t ata_identify(uint8_t drive_num){
     // Check if drive exists
     uint8_t status = inb(base + 7);
     if (status == 0) {
-        return E_EXISTS;
+        return E_NOTFOUND;
     }
 
     //Wait for BSY to clear
@@ -146,7 +154,7 @@ static kerr_t ata_identify(uint8_t drive_num){
     }
 
     // Wait for DRQ or ERR
-    if (ata_wait_drq(base) != 0) {
+    if (ata_wait_drq(base) != E_OK) {
         return E_HARDWARE;
     }
 
@@ -211,7 +219,7 @@ void ata_init() {
 
     // Identify all drives and register them
     for (int i = 0; i < 4; i++) {
-        if (ata_identify(i) == 0) {
+        if (ata_identify(i) == E_OK) {
             char num_str[32];
             vga_puts("  ");
             vga_puts(ata_block_devices[i].label);

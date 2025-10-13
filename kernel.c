@@ -3,6 +3,7 @@
 #include "drivers/keyboard.h"
 #include "drivers/pit.h"
 #include "drivers/block.h"
+#include "drivers/disks/ata.h"
 #include "drivers/disks/nvme.h"
 #include "shell/shell.h"
 #include "mm/memory.h"
@@ -13,6 +14,7 @@
 #define HEAP_SIZE  0x100000  // 1MB
 
 #define COLOR_SUCCESS (vga_color_attr_t){VGA_COLOR_GREEN, VGA_COLOR_BLACK}
+#define COLOR_FAILURE (vga_color_attr_t){VGA_COLOR_RED, VGA_COLOR_BLACK}
 
 void kernel_main() {
     // Initialize the VGA text mode
@@ -48,9 +50,17 @@ void kernel_main() {
     block_init();
     vga_puts_color("[SUCCESS]\n",COLOR_SUCCESS);
 
-    vga_puts("Initializing NVMe...   ");
-    nvme_init();
+    vga_puts("Initializing ATA...   ");
+    ata_init();
     vga_puts_color("[SUCCESS]\n", COLOR_SUCCESS);
+
+    vga_puts("Initializing NVMe...   ");
+    kerr_t nvme_status = nvme_init();
+    if(nvme_status == E_OK) vga_puts_color("[SUCCESS]\n", COLOR_SUCCESS);
+    else{
+        vga_puts_color("[FAILED]: ", COLOR_FAILURE);
+        vga_puts(k_strerror(nvme_status));
+    }
 
     vga_puts_color("\nReady! System is running.\n", COLOR_SUCCESS);
 
