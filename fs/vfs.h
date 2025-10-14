@@ -30,10 +30,10 @@ kerr_t vfs_init();
 file_t* vfs_create_file(const char* path);
 file_t* vfs_create_directory(const char* path);
 file_t* vfs_open(const char* path);
-int vfs_write(file_t* file, const void* data, size_t size);
-int vfs_read(file_t* file, void* buffer, size_t size);
-int vfs_delete(const char* path);
-void vfs_list(const char* path);
+kerr_t vfs_write(file_t* file, const void* data, size_t size);
+kerr_t vfs_read(file_t* file, void* buffer, size_t size);
+kerr_t vfs_delete(const char* path);
+kerr_t vfs_list(const char* path);
 void vfs_print_tree(file_t* dir, int depth);
 int vfs_copy_file(const char* dest, file_t* source, size_t size);
 

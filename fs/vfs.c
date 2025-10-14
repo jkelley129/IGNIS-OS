@@ -183,9 +183,9 @@ file_t* vfs_open(const char* path){
     return vfs_resolve_path(path);
 }
 
-int vfs_write(file_t* file, const void* data, size_t size){
+kerr_t vfs_write(file_t* file, const void* data, size_t size){
     if(!file || file->type != FILE_TYPE_REGULAR){
-        return -1;
+        return E_ISDIR;
     }
 
     if(file->data){
@@ -195,7 +195,7 @@ int vfs_write(file_t* file, const void* data, size_t size){
     file->data = (uint8_t*)kmalloc(size);
     if(!file->data){
         file->size = 0;
-        return -1;
+        return E_INVALID;
     }
 
     uint8_t* src = (uint8_t*)data;
@@ -208,9 +208,9 @@ int vfs_write(file_t* file, const void* data, size_t size){
     return size;
 }
 
-int vfs_read(file_t* file, void* buffer, size_t size){
+kerr_t vfs_read(file_t* file, void* buffer, size_t size){
     if(!file || file->type != FILE_TYPE_REGULAR){
-        return -1;
+        return E_ISDIR;
     }
 
     size_t to_read = (size < file->size) ? size : file->size;
@@ -226,7 +226,7 @@ int vfs_read(file_t* file, void* buffer, size_t size){
 int vfs_delete(const char* path){
     file_t* file = vfs_resolve_path(path);
     if(!file || file == root){
-        return -1;
+        return E_PERM;
     }
 
     file_t* parent = file->parent;
@@ -253,16 +253,14 @@ int vfs_delete(const char* path){
     return 0;
 }
 
-int vfs_copy_file(const char* dest_path, file_t* source, size_t size){
+kerr_t vfs_copy_file(const char* dest_path, file_t* source, size_t size){
     if(source->type == FILE_TYPE_DIRECTORY){
-        vga_perror("Cannot copy a directory\n");
-        return -1;
+        return E_ISDIR;
     }
 
     for(size_t i = 0; i < strlen(dest_path); i++){
         if(i == '/' || i == '\\'){
-            vga_perror("Destination path cannot include a / or \\");
-            return -1;
+            return E_INVALID;
         }
     }
 
@@ -278,23 +276,20 @@ int vfs_copy_file(const char* dest_path, file_t* source, size_t size){
     return 0;
 }
 
-void vfs_list(const char* path){
+kerr_t vfs_list(const char* path){
     file_t* dir = vfs_resolve_path(path);
 
     if(!dir){
-        vga_perror("Directory not found\n");
-        return;
+        return E_NOTFOUND;
     }
 
     if(dir->type != FILE_TYPE_DIRECTORY){
-        vga_perror("Not a directory\n");
-        return;
+        return E_NOTDIR;
     }
 
     file_t* child = dir->first_child;
     if(!child){
-        vga_perror("Directory empty\n");
-        return;
+        return E_NOTFOUND;
     }
 
     while(child){
