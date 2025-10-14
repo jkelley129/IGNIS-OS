@@ -1,12 +1,13 @@
 # Ignis OS
 ## What is Ignis?
 Ignis is an open source hobby OS meant to gain experience with low level concepts and implementations. This is a learning project, and I hope to expand it to learn more about all of the concepts. I am using a variety of tools to facilitate my learning, including CPU documentation, hardware docs, and some genAI tools to help me learn. <br>
-This is **NOT** a Linux distribution. It is currently just a kernel(userspace on the way), built from nothing.
+This is **NOT** a Linux distribution or UNIX system. It is currently just a kernel(userspace in the future), built from nothing.
 
 ## Technical Description
-- It is designed for 64 bit systems for the x86 instruction set
+- It is designed for 64-bit systems for the x86 instruction set
 - It uses a custom Multiboot2 compatible boot header with GRUB2
 - For testing and developing, it is emulated using [QEMU](https://qemu.org)
+- For a full feature list, look [here](#current-features)
 
 ## Installation
 ### Required Build Dependencies
@@ -49,7 +50,7 @@ Features in rough chronological order of implementation
   - Implement the error handling **[ DONE ]**
   - Add generic driver registration system
   - Decouple static global state
-- Implementation of an on-disk filesystem(ext4) **[ PROJECTED NEXT TASK ]**
+- Implementation of an on-disk filesystem(ext4) **[ NEXT TASK ]**
 - More device drivers for more devices
 - - More sophisticated memory allocator(buddy allocator, slab allocator)
 - User space with limited permissions
