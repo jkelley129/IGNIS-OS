@@ -45,10 +45,4 @@ const char* k_strerror(kerr_t err);
     }                             \
 }while(0);
 
-#define TRY_CALL(expr) do { \
-    if(expr) expr;          \
-}while(0)
-
-
-
 #endif
