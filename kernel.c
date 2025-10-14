@@ -4,7 +4,6 @@
 #include "drivers/pit.h"
 #include "drivers/block.h"
 #include "drivers/disks/ata.h"
-#include "drivers/disks/nvme.h"
 #include "shell/shell.h"
 #include "mm/memory.h"
 #include "fs/vfs.h"
@@ -46,26 +45,15 @@ void kernel_main() {
     // Initialize interrupts and keyboard
     TRY_INIT("IDT", idt_init(), err_count)
 
-    console_puts("Initializing ");
-    console_puts("Memory");
-    console_puts("...   ");
-    status = memory_init(HEAP_START, HEAP_SIZE);
-    if (status == E_OK) {
-        console_puts_color("[SUCCESS]\n", (console_color_attr_t) {CONSOLE_COLOR_GREEN, CONSOLE_COLOR_BLACK});
-    } else {
-        console_puts_color("[FAILED: ", (console_color_attr_t) {CONSOLE_COLOR_RED, CONSOLE_COLOR_BLACK});
-        console_puts(k_strerror(status));
-        console_putc('\n');
-        err_count++;
-    }
+    TRY_INIT("Memory", memory_init(HEAP_START, HEAP_SIZE),err_count)
 
     TRY_INIT("RAM File System",vfs_init(),err_count)
 
-    TRY_INIT("keyboard", keyboard_init(), err_count);
+    TRY_INIT("keyboard", keyboard_init(), err_count)
 
     TRY_INIT("PIT", pit_init(100), err_count)
 
-    TRY_INIT("Block Device Layer",block_init(),err_count);
+    TRY_INIT("Block Device Layer",block_init(),err_count)
 
     TRY_INIT("ATA",ata_init(),err_count)
 
