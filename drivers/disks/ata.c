@@ -218,6 +218,7 @@ kerr_t ata_init() {
     }
 
     // Identify all drives and register them
+    uint8_t count = 0;
     for (int i = 0; i < 4; i++) {
         if (ata_identify(i) == E_OK) {
             char num_str[32];
@@ -226,8 +227,9 @@ kerr_t ata_init() {
             console_puts(": Found (");
             uitoa(ata_block_devices[i].block_count / 2048, num_str);
             console_puts(num_str);
-            console_puts(" MB)\n");
+            console_puts(" MB)");
+            count++;
         }
     }
-    return E_OK;
+    return count != 0 ? E_OK : E_NOTFOUND;
 }
