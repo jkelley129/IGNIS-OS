@@ -1,5 +1,5 @@
 #include "keyboard.h"
-#include "../io/vga.h"
+#include "../console/console.h"
 #include "error_handling/errno.h"
 
 // US QWERTY keyboard layout scancode to ASCII
@@ -47,9 +47,9 @@ void keyboard_handler() {
     if(scancode == 0x0E) {
         if (key_callback) {
             key_callback('\b');
-            vga_backspace(1);
+            console_backspace(1);
         } else {
-            vga_backspace(1);
+            console_backspace(1);
         }
         return;
     }
@@ -73,9 +73,9 @@ void keyboard_handler() {
     if (c) {
         if (key_callback) {
             key_callback(c);
-            vga_putc(c);
+            console_putc(c);
         } else {
-            vga_putc(c);
+            console_putc(c);
         }
     }
 }

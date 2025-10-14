@@ -1,7 +1,7 @@
 #include "ata.h"
 #include "../block.h"
 #include "../../io/ports.h"
-#include "../../io/vga.h"
+#include "../../console/console.h"
 #include "../../libc/string.h"
 #include "../../error_handling/errno.h"
 
@@ -221,12 +221,12 @@ kerr_t ata_init() {
     for (int i = 0; i < 4; i++) {
         if (ata_identify(i) == E_OK) {
             char num_str[32];
-            vga_puts("  ");
-            vga_puts(ata_block_devices[i].label);
-            vga_puts(": Found (");
+            console_puts("  ");
+            console_puts(ata_block_devices[i].label);
+            console_puts(": Found (");
             uitoa(ata_block_devices[i].block_count / 2048, num_str);
-            vga_puts(num_str);
-            vga_puts(" MB)\n");
+            console_puts(num_str);
+            console_puts(" MB)\n");
         }
     }
     return E_OK;

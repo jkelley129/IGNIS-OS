@@ -1,6 +1,6 @@
 #include "nvme.h"
 #include "../block.h"
-#include "../../io/vga.h"
+#include "../../console/console.h"
 #include "../../io/ports.h"
 #include "../../libc/string.h"
 #include "../../mm/memory.h"
@@ -307,14 +307,14 @@ kerr_t nvme_init() {
         return E_NOTFOUND;
     }
 
-    vga_puts("   Found NVMe controller at ");
+    console_puts("   Found NVMe controller at ");
     char num_str[32];
     uitoa(bus, num_str);
-    vga_puts(num_str);
-    vga_putc(':');
+    console_puts(num_str);
+    console_putc(':');
     uitoa(slot, num_str);
-    vga_puts(num_str);
-    vga_putc('\n');
+    console_puts(num_str);
+    console_putc('\n');
 
     //Enable PCI bus mastering and memory space
     uint16_t command = pci_read_config(bus, slot, func, PCI_COMMAND);
@@ -402,13 +402,13 @@ kerr_t nvme_init() {
 
                 block_register_device(dev);
 
-                vga_puts("  ");
-                vga_puts(dev->label);
-                vga_puts(": Found (");
+                console_puts("  ");
+                console_puts(dev->label);
+                console_puts(": Found (");
                 uint64_t size_mb = (dev->block_count * dev->block_size) / (1024 * 1024);
                 uitoa(size_mb, num_str);
-                vga_puts(num_str);
-                vga_puts(" MB)\n");
+                console_puts(num_str);
+                console_puts(" MB)\n");
             }
         }
     }

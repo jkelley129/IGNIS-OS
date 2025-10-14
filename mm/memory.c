@@ -1,5 +1,5 @@
 #include "memory.h"
-#include "../io/vga.h"
+#include "../console/console.h"
 #include "../libc/string.h"
 #include "error_handling/errno.h"
 
@@ -15,12 +15,12 @@ kerr_t memory_init(uint64_t start, uint64_t size){
     heap_current = start;
     free_list = 0;
 
-    vga_puts("Memory initialized");
+    console_puts("Memory initialized");
     char addr_str[32];
-    vga_puts(" with size ");
+    console_puts(" with size ");
     uitoa(size / 1024, addr_str);
-    vga_puts(addr_str);
-    vga_puts(" KB   ");
+    console_puts(addr_str);
+    console_puts(" KB   ");
 
     return E_OK;
 }
@@ -58,7 +58,7 @@ void* kmalloc(size_t size){
     uint64_t block_addr = heap_current;
     uint64_t total_size = size + MEMORY_BLOCK_HEADER_SIZE;
     if(heap_current + total_size > heap_end){
-        vga_puts("[MEMORY ERROR]:Out of memory!\n");
+        console_puts("[MEMORY ERROR]:Out of memory!\n");
         return 0;
     }
 
@@ -148,27 +148,27 @@ uint64_t memory_get_total(){
 }
 
 void memory_print_stats() {
-    vga_puts("\n=== Memory Statistics ===\n");
+    console_puts("\n=== Memory Statistics ===\n");
 
     char num_str[32];
     uint64_t total_size = heap_end - heap_start;
     uint64_t used_size = heap_current - heap_start;
     uint64_t free_size = heap_end - heap_current;
 
-    vga_puts("Total heap: ");
+    console_puts("Total heap: ");
     uitoa(total_size / 1024, num_str);
-    vga_puts(num_str);
-    vga_puts(" KB\n");
+    console_puts(num_str);
+    console_puts(" KB\n");
 
-    vga_puts("Used: ");
+    console_puts("Used: ");
     uitoa(used_size, num_str);
-    vga_puts(num_str);
-    vga_puts(" bytes\n");
+    console_puts(num_str);
+    console_puts(" bytes\n");
 
-    vga_puts("Free: ");
+    console_puts("Free: ");
     uitoa(free_size / 1024, num_str);
-    vga_puts(num_str);
-    vga_puts(" KB\n");
+    console_puts(num_str);
+    console_puts(" KB\n");
 
     // Count blocks
     uint64_t total_blocks = 0;
@@ -183,13 +183,13 @@ void memory_print_stats() {
         current = current->next;
     }
 
-    vga_puts("Total blocks: ");
+    console_puts("Total blocks: ");
     uitoa(total_blocks, num_str);
-    vga_puts(num_str);
-    vga_puts("\n");
+    console_puts(num_str);
+    console_puts("\n");
 
-    vga_puts("Free blocks: ");
+    console_puts("Free blocks: ");
     uitoa(free_blocks, num_str);
-    vga_puts(num_str);
-    vga_puts("\n\n");
+    console_puts(num_str);
+    console_puts("\n\n");
 }

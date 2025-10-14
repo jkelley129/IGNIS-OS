@@ -2,6 +2,7 @@
 #define VGA_H
 
 #include "../libc/stdint.h"
+#include "console/console.h"
 
 #define VGA_WIDTH 80
 #define VGA_HEIGHT 25
@@ -31,13 +32,6 @@ typedef struct {
   uint8_t background : 4;
 }vga_color_attr_t;
 
-void vga_init();
-void vga_clear();
-void vga_putc(char c);
-void vga_puts(const char* str);
-void vga_puts_color(const char* str, vga_color_attr_t);
-void vga_backspace(int count);
-void vga_perror(const char* error_str);
-void vga_set_color(vga_color_attr_t color);
+console_driver_t* vga_get_driver(void);
 
 #endif

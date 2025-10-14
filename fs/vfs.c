@@ -1,7 +1,7 @@
 #include "vfs.h"
 #include "../libc/stddef.h"
 #include "../mm/memory.h"
-#include "../io/vga.h"
+#include "../console/console.h"
 #include "error_handling/errno.h"
 
 static file_t* root = NULL;
@@ -109,7 +109,7 @@ file_t* vfs_create_file(const char* path){
 
     for(size_t i = 0; i < strlen(path); i++){
         if(i == '/' || i == '\\'){
-            vga_perror("Destination path cannot include a / or \\");
+            console_perror("Destination path cannot include a / or \\");
             return 0;
         }
     }
@@ -293,47 +293,47 @@ kerr_t vfs_list(const char* path){
     }
 
     while(child){
-        vga_set_color((vga_color_attr_t){
-                child->type == FILE_TYPE_DIRECTORY ? VGA_COLOR_LIGHT_BLUE : VGA_COLOR_WHITE,
-                VGA_COLOR_BLACK
+        console_set_color((console_color_attr_t){
+                child->type == FILE_TYPE_DIRECTORY ? CONSOLE_COLOR_LIGHT_BLUE : CONSOLE_COLOR_WHITE,
+                CONSOLE_COLOR_BLACK
         });
 
-        vga_puts(child->name);
+        console_puts(child->name);
         if(child->type == FILE_TYPE_DIRECTORY){
-            vga_putc('/');
+            console_putc('/');
         }else{
-            vga_putc(' ');
+            console_putc(' ');
             char size_str[32];
             uitoa(child->size, size_str);
-            vga_puts(size_str);
-            vga_puts(" bytes");
+            console_puts(size_str);
+            console_puts(" bytes");
         }
-        vga_putc('\n');
+        console_putc('\n');
 
         child = child->next;
     }
-    vga_set_color((vga_color_attr_t) {VGA_COLOR_WHITE,VGA_COLOR_BLACK});
+    console_set_color((console_color_attr_t) {CONSOLE_COLOR_WHITE,CONSOLE_COLOR_BLACK});
 }
 
 void vfs_print_tree(file_t* dir, int depth) {
     if (!dir) dir = root;
 
     for (int i = 0; i < depth; i++) {
-        vga_puts("  ");
+        console_puts("  ");
     }
 
-    vga_set_color((vga_color_attr_t){
-            dir->type == FILE_TYPE_DIRECTORY ? VGA_COLOR_LIGHT_BLUE : VGA_COLOR_WHITE,
-            VGA_COLOR_BLACK
+    console_set_color((console_color_attr_t){
+            dir->type == FILE_TYPE_DIRECTORY ? CONSOLE_COLOR_LIGHT_BLUE : CONSOLE_COLOR_WHITE,
+            CONSOLE_COLOR_BLACK
     });
 
-    vga_puts(dir->name);
+    console_puts(dir->name);
     if (dir->type == FILE_TYPE_DIRECTORY) {
-        vga_puts("/");
+        console_puts("/");
     }
-    vga_puts("\n");
+    console_puts("\n");
 
-    vga_set_color((vga_color_attr_t){VGA_COLOR_WHITE, VGA_COLOR_BLACK});
+    console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
 
     if (dir->type == FILE_TYPE_DIRECTORY) {
         file_t* child = dir->first_child;

@@ -20,6 +20,7 @@ NVME_DISK = $(OUTPUT_DIR)/nvme_disk.img
 OBJS = $(BUILD_DIR)/boot.o \
        $(BUILD_DIR)/kernel.o \
        $(BUILD_DIR)/vga.o \
+       $(BUILD_DIR)/console.o \
        $(BUILD_DIR)/idt.o \
        $(BUILD_DIR)/keyboard.o \
        $(BUILD_DIR)/pit.o \
@@ -57,6 +58,9 @@ $(BUILD_DIR)/idt_asm.o: interrupts/idt.asm | $(BUILD_DIR)
 	$(NASM) -f elf64 $< -o $@
 
 $(BUILD_DIR)/vga.o: io/vga.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/console.o: console/console.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/idt.o: interrupts/idt.c | $(BUILD_DIR)

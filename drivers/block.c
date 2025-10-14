@@ -1,5 +1,5 @@
 #include "block.h"
-#include "../io/vga.h"
+#include "../console/console.h"
 #include "../libc/string.h"
 #include "../error_handling/errno.h"
 
@@ -39,10 +39,10 @@ uint8_t block_get_device_count(){
 }
 
 void block_list_devices(){
-    vga_puts("\n=== Block Devices ===\n");
+    console_puts("\n=== Block Devices ===\n");
 
     if(device_count == 0){
-        vga_puts("No block devices found");
+        console_puts("No block devices found");
         return;
     }
 
@@ -52,38 +52,38 @@ void block_list_devices(){
         if(dev && dev->present){
             char num_str[32];
 
-            vga_puts("Device ");
+            console_puts("Device ");
             uitoa(dev->id, num_str);
-            vga_puts(num_str);
-            vga_puts(": ");
-            vga_puts(" (");
+            console_puts(num_str);
+            console_puts(": ");
+            console_puts(" (");
 
             switch(dev->type){
                 case BLOCK_TYPE_ATA:
-                    vga_puts("ATA");
+                    console_puts("ATA");
                     break;
                 case BLOCK_TYPE_AHCI:
-                    vga_puts("AHCI");
+                    console_puts("AHCI");
                     break;
                 case BLOCK_TYPE_NVME:
-                    vga_puts("NVME");
+                    console_puts("NVME");
                     break;
                 case BLOCK_TYPE_RAMDISK:
-                    vga_puts("RAM Disk");
+                    console_puts("RAM Disk");
                     break;
                 default:
-                    vga_puts("Unknown");
+                    console_puts("Unknown");
             }
 
-            vga_puts(") - ");
+            console_puts(") - ");
 
             uint64_t size_mb = (dev->block_count * dev->block_size) / (1024 * 1024);
             uitoa(size_mb, num_str);
-            vga_puts(num_str);
-            vga_puts(" MB\n");
+            console_puts(num_str);
+            console_puts(" MB\n");
         }
     }
-    vga_putc('\n');
+    console_putc('\n');
 }
 
 // Generic I/O operations
