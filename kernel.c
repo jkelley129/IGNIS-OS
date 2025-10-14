@@ -69,8 +69,6 @@ void kernel_main() {
 
     TRY_INIT("ATA",ata_init(),err_count)
 
-    TRY_INIT("NVMe", nvme_init(),err_count)
-
     if(err_count == 0) console_puts_color("\nReady! System is running.\n", COLOR_SUCCESS);
     else{
         char num_str[3];
