@@ -129,15 +129,15 @@ void cmd_about(int argc, char** argv) {
     console_puts("Description: A hobby OS written from scratch\n");
     console_puts("\n");
     console_puts("Features:\n");
-    console_puts("  - CONSOLE text mode output\n");
+    console_puts("  - VGA text mode output\n");
     console_puts("  - Interrupt handling (IDT)\n");
     console_puts("  - Keyboard driver\n");
     console_puts("  - PIT timer\n");
     console_puts("  - Memory allocator\n");
-    console_puts("  - In-memory filesystem (VFS)\n");
+    console_puts("  - Virtual filesystem (VFS)\n");
+    console_puts("  - RAM filesystem (RAMFS)\n");
     console_puts("  - Block device layer\n");
     console_puts("  - ATA disk driver\n");
-    console_puts("  - NVMe disk driver(WiP)\n");
     console_puts("\n");
 }
 
@@ -239,13 +239,18 @@ void cmd_memtest(int argc, char** argv) {
 void cmd_ls(int argc, char** argv) {
     const char* path = (argc > 1) ? argv[1] : "/";
     console_putc('\n');
-    vfs_list(path);
+    kerr_t err = vfs_list(path);
+    if (err != E_OK) {
+        console_perror("Error listing directory: ");
+        console_perror(k_strerror(err));
+        console_putc('\n');
+    }
     console_putc('\n');
 }
 
 void cmd_tree(int argc, char** argv) {
     const char* path = (argc > 1) ? argv[1] : "/";
-    file_t* dir = vfs_resolve_path(path);
+    vfs_node_t* dir = vfs_resolve_path(path);
 
     if (!dir) {
         console_perror("Directory not found\n");
@@ -263,13 +268,19 @@ void cmd_touch(int argc, char** argv) {
         return;
     }
 
-    file_t* file = vfs_create_file(argv[1]);
-    if (file) {
+    kerr_t err = vfs_create_file(argv[1]);
+    if (err == E_OK) {
         console_puts("Created file: ");
         console_puts(argv[1]);
         console_putc('\n');
+    } else if (err == E_EXISTS) {
+        console_puts("File already exists: ");
+        console_puts(argv[1]);
+        console_putc('\n');
     } else {
-        console_perror("Failed to create file\n");
+        console_perror("Failed to create file: ");
+        console_perror(k_strerror(err));
+        console_putc('\n');
     }
 }
 
@@ -279,13 +290,19 @@ void cmd_mkdir(int argc, char** argv) {
         return;
     }
 
-    file_t* dir = vfs_create_directory(argv[1]);
-    if (dir) {
+    kerr_t err = vfs_create_directory(argv[1]);
+    if (err == E_OK) {
         console_puts("Created directory: ");
         console_puts(argv[1]);
         console_putc('\n');
+    } else if (err == E_EXISTS) {
+        console_puts("Directory already exists: ");
+        console_puts(argv[1]);
+        console_putc('\n');
     } else {
-        console_perror("Failed to create directory\n");
+        console_perror("Failed to create directory: ");
+        console_perror(k_strerror(err));
+        console_putc('\n');
     }
 }
 
@@ -295,12 +312,15 @@ void cmd_rm(int argc, char** argv) {
         return;
     }
 
-    if (vfs_delete(argv[1]) == 0) {
+    kerr_t err = vfs_delete(argv[1]);
+    if (err == E_OK) {
         console_puts("Removed: ");
         console_puts(argv[1]);
         console_putc('\n');
     } else {
-        console_perror("Failed to remove file\n");
+        console_perror("Failed to remove: ");
+        console_perror(k_strerror(err));
+        console_putc('\n');
     }
 }
 
@@ -310,7 +330,7 @@ void cmd_cat(int argc, char** argv) {
         return;
     }
 
-    file_t* file = vfs_open(argv[1]);
+    vfs_node_t* file = vfs_open(argv[1]);
     if (!file) {
         console_perror("File not found\n");
         return;
@@ -318,14 +338,35 @@ void cmd_cat(int argc, char** argv) {
 
     if (file->type != FILE_TYPE_REGULAR) {
         console_perror("Not a regular file\n");
+        vfs_close(file);
         return;
     }
 
-    console_putc('\n');
-    for (size_t i = 0; i < file->size; i++) {
-        console_putc(file->data[i]);
+    // Allocate buffer to read file
+    uint8_t* buffer = kmalloc(file->size + 1);
+    if (!buffer) {
+        console_perror("Out of memory\n");
+        vfs_close(file);
+        return;
     }
-    console_puts("\n\n");
+
+    size_t bytes_read = 0;
+    kerr_t err = vfs_read(file, buffer, file->size, &bytes_read);
+
+    if (err == E_OK) {
+        console_putc('\n');
+        for (size_t i = 0; i < bytes_read; i++) {
+            console_putc(buffer[i]);
+        }
+        console_puts("\n\n");
+    } else {
+        console_perror("Failed to read file: ");
+        console_perror(k_strerror(err));
+        console_putc('\n');
+    }
+
+    kfree(buffer);
+    vfs_close(file);
 }
 
 void cmd_write(int argc, char** argv) {
@@ -334,14 +375,21 @@ void cmd_write(int argc, char** argv) {
         return;
     }
 
-    file_t* file = vfs_open(argv[1]);
+    // Try to open existing file, or create new one
+    vfs_node_t* file = vfs_open(argv[1]);
     if (!file) {
-        file = vfs_create_file(argv[1]);
-    }
-
-    if (!file) {
-        console_perror("Failed to open/create file\n");
-        return;
+        kerr_t err = vfs_create_file(argv[1]);
+        if (err != E_OK && err != E_EXISTS) {
+            console_perror("Failed to create file: ");
+            console_perror(k_strerror(err));
+            console_putc('\n');
+            return;
+        }
+        file = vfs_open(argv[1]);
+        if (!file) {
+            console_perror("Failed to open file\n");
+            return;
+        }
     }
 
     // Concatenate all arguments after filename
@@ -357,17 +405,24 @@ void cmd_write(int argc, char** argv) {
         }
     }
 
-    if (vfs_write(file, buffer, pos) >= 0) {
+    size_t bytes_written = 0;
+    kerr_t err = vfs_write(file, buffer, pos, &bytes_written);
+
+    if (err == E_OK) {
         console_puts("Wrote ");
         char num_str[32];
-        uitoa(pos, num_str);
+        uitoa(bytes_written, num_str);
         console_puts(num_str);
         console_puts(" bytes to ");
         console_puts(argv[1]);
         console_putc('\n');
     } else {
-        console_perror("Write failed\n");
+        console_perror("Write failed: ");
+        console_perror(k_strerror(err));
+        console_putc('\n');
     }
+
+    vfs_close(file);
 }
 
 void cmd_cp(int argc, char** argv) {
@@ -376,20 +431,17 @@ void cmd_cp(int argc, char** argv) {
         return;
     }
 
-    file_t* src = vfs_open(argv[1]);
-    if (!src) {
-        console_perror("Source file not found\n");
-        return;
-    }
-
-    if (vfs_copy_file(argv[2], src, src->size) == 0) {
+    kerr_t err = vfs_copy_file(argv[2], argv[1]);
+    if (err == E_OK) {
         console_puts("Copied ");
         console_puts(argv[1]);
         console_puts(" to ");
         console_puts(argv[2]);
         console_putc('\n');
     } else {
-        console_perror("Copy failed\n");
+        console_perror("Copy failed: ");
+        console_perror(k_strerror(err));
+        console_putc('\n');
     }
 }
 
@@ -518,12 +570,11 @@ void cmd_blkwrite(int argc, char** argv) {
 
     if (blk_write_status == 0) {
         console_set_color((console_color_attr_t){CONSOLE_COLOR_GREEN, CONSOLE_COLOR_BLACK});
-        console_puts("Write successful\n\n");
+        console_puts("✓ Write successful\n\n");
         console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
     } else {
         console_set_color((console_color_attr_t){CONSOLE_COLOR_RED, CONSOLE_COLOR_BLACK});
-        console_puts("Write failed with error");
-        k_strerror(blk_write_status);
+        console_puts("✗ Write failed: ");
         console_puts(k_strerror(blk_write_status));
         console_puts("\n\n");
         console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
@@ -634,7 +685,7 @@ void cmd_hexdump(int argc, char** argv) {
         return;
     }
 
-    file_t* file = vfs_open(argv[1]);
+    vfs_node_t* file = vfs_open(argv[1]);
     if (!file) {
         console_perror("File not found\n");
         return;
@@ -642,6 +693,27 @@ void cmd_hexdump(int argc, char** argv) {
 
     if (file->type != FILE_TYPE_REGULAR) {
         console_perror("Not a regular file\n");
+        vfs_close(file);
+        return;
+    }
+
+    // Read file data
+    uint8_t* buffer = kmalloc(file->size);
+    if (!buffer) {
+        console_perror("Out of memory\n");
+        vfs_close(file);
+        return;
+    }
+
+    size_t bytes_read = 0;
+    kerr_t err = vfs_read(file, buffer, file->size, &bytes_read);
+
+    if (err != E_OK) {
+        console_perror("Failed to read file: ");
+        console_perror(k_strerror(err));
+        console_putc('\n');
+        kfree(buffer);
+        vfs_close(file);
         return;
     }
 
@@ -649,7 +721,7 @@ void cmd_hexdump(int argc, char** argv) {
     console_puts(argv[1]);
     console_puts(":\n\n");
 
-    for (size_t i = 0; i < file->size; i++) {
+    for (size_t i = 0; i < bytes_read; i++) {
         if (i % 16 == 0) {
             char num_str[32];
             uitoa(i, num_str);
@@ -663,7 +735,7 @@ void cmd_hexdump(int argc, char** argv) {
             console_puts(": ");
         }
 
-        uint8_t byte = file->data[i];
+        uint8_t byte = buffer[i];
         char hex[3];
         hex[0] = "0123456789ABCDEF"[byte >> 4];
         hex[1] = "0123456789ABCDEF"[byte & 0xF];
@@ -674,7 +746,7 @@ void cmd_hexdump(int argc, char** argv) {
         if ((i + 1) % 16 == 0) {
             console_puts("  |");
             for (size_t j = i - 15; j <= i; j++) {
-                char c = file->data[j];
+                char c = buffer[j];
                 if (c >= 32 && c <= 126) {
                     console_putc(c);
                 } else {
@@ -686,14 +758,14 @@ void cmd_hexdump(int argc, char** argv) {
     }
 
     // Print remaining ASCII if not aligned
-    if (file->size % 16 != 0) {
-        size_t remaining = file->size % 16;
+    if (bytes_read % 16 != 0) {
+        size_t remaining = bytes_read % 16;
         for (size_t i = remaining; i < 16; i++) {
             console_puts("   ");
         }
         console_puts("  |");
-        for (size_t i = file->size - remaining; i < file->size; i++) {
-            char c = file->data[i];
+        for (size_t i = bytes_read - remaining; i < bytes_read; i++) {
+            char c = buffer[i];
             if (c >= 32 && c <= 126) {
                 console_putc(c);
             } else {
@@ -707,6 +779,9 @@ void cmd_hexdump(int argc, char** argv) {
     }
 
     console_puts("\n");
+
+    kfree(buffer);
+    vfs_close(file);
 }
 
 // ============================================================================

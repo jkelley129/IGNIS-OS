@@ -9,6 +9,7 @@
 #include "fs/vfs.h"
 #include "error_handling/errno.h"
 #include "vga.h"
+#include "fs/filesystems/ramfs.h"
 
 // Define heap area - 1MB heap starting at 2MB
 #define HEAP_START 0x200000
@@ -47,7 +48,29 @@ void kernel_main() {
 
     TRY_INIT("Memory", memory_init(HEAP_START, HEAP_SIZE),err_count)
 
-    TRY_INIT("RAM File System",vfs_init(),err_count)
+    // NEW: Initialize VFS layer
+    TRY_INIT("VFS Layer", vfs_init(), err_count)
+
+    // NEW: Create and mount RAM filesystem
+    console_puts("Mounting RAM File System...   ");
+    filesystem_t* ramfs = NULL;
+    status = ramfs_create_fs(&ramfs);
+    if (status == E_OK) {
+        status = vfs_mount(ramfs, "/");
+        if (status == E_OK) {
+            console_puts_color("[SUCCESS]\n", COLOR_SUCCESS);
+        } else {
+            console_puts_color("[FAILED: ", COLOR_FAILURE);
+            console_puts(k_strerror(status));
+            console_putc('\n');
+            err_count++;
+        }
+    } else {
+        console_puts_color("[FAILED]: ", COLOR_FAILURE);
+        console_puts(k_strerror(status));
+        console_putc('\n');
+        err_count++;
+    }
 
     TRY_INIT("keyboard", keyboard_init(), err_count)
 

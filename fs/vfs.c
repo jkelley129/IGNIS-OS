@@ -1,23 +1,136 @@
 #include "vfs.h"
-#include "../libc/stddef.h"
-#include "../mm/memory.h"
-#include "../console/console.h"
-#include "error_handling/errno.h"
+#include "libc/stddef.h"
+#include "console/console.h"
 
-static file_t* root = NULL;
+//Mount table
+static mount_point_t mount_table[MAX_MOUNTS];
+static vfs_node_t* vfs_root = NULL;
 
-kerr_t vfs_init() {
-    // Create root directory
-    root = (file_t*) kmalloc(sizeof(file_t));
-    strcpy(root->name, "/");
-    root->type = FILE_TYPE_DIRECTORY;
-    root->data = NULL;
-    root->size = 0;
-    root->next = NULL;
-    root->first_child = NULL;
-    root->parent = NULL;
+kerr_t vfs_init(){
+    //Clear mount table
+    for(int i = 0; i < MAX_MOUNTS; i++) {
+        mount_table[i].in_use = 0;
+        mount_table[i].fs = NULL;
+    }
+    vfs_root = NULL;
+    return E_OK;
+}
+
+kerr_t vfs_mount(filesystem_t* fs, const char* path){
+    if(!fs) return E_INVALID;
+
+    //Find free mount point
+    int slot = -1;
+    for(int i = 0; i < MAX_MOUNTS; i++){
+        if(!mount_table[i].in_use){
+            slot = i;
+            break;
+        }
+    }
+
+    if(slot == -1) return E_NOMEM;
+
+    //Call the filesystems mount function
+    if(!fs->mount) return E_INVALID;
+    kerr_t err = fs->mount(fs, NULL);
+    if(err != E_OK) return err;
+
+    //Add to mount table
+    strcpy(mount_table[slot].path, path);
+    mount_table[slot].fs = fs;
+    mount_table[slot].in_use = 1;
+
+    //If mounting at root, set vfs_root
+    if(strcmp(path, "/") == 0){
+        vfs_root = fs->root;
+    }
 
     return E_OK;
+}
+
+kerr_t vfs_unmount(const char* path){
+    for(int i = 0; i < MAX_MOUNTS; i++){
+        if(mount_table[i].in_use && strcmp(path, mount_table[i].path) == 0){
+            filesystem_t* fs = mount_table[i].fs;
+
+            if(!fs->unmount) return E_NOTFOUND;
+            kerr_t err = fs->unmount(fs);
+            if(err != E_OK) return err;
+
+            mount_table[i].in_use = 0;
+            mount_table[i].fs = NULL;
+
+            return E_OK;
+        }
+    }
+    return E_NOTFOUND;
+}
+
+static filesystem_t* vfs_get_fs_for_path(const char* path){
+    for (int i = 0; i < MAX_MOUNTS; i++) {
+        if (mount_table[i].in_use) {
+            size_t mount_len = strlen(mount_table[i].path);
+            if (strncmp(path, mount_table[i].path, mount_len) == 0) {
+                return mount_table[i].fs;
+            }
+        }
+    }
+    return NULL;
+}
+
+vfs_node_t* vfs_resolve_path(const char* path){
+    if(!vfs_root || !path) return NULL;
+
+    if(strcmp(path, "/") == 0) return vfs_root;
+
+    // Start from root and traverse
+    vfs_node_t* current = vfs_root;
+
+    char path_copy[MAX_PATH];
+    strcpy(path_copy, path);
+
+    char* component = path_copy;
+    if(*component == '/') component++;
+
+    char* next_slash;
+    while(*component){
+        next_slash = component;
+        while(*next_slash && *next_slash != '/'){
+            next_slash++;
+        }
+
+        char saved = *next_slash;
+        *next_slash = '\0';
+
+        //Find the child with that name
+        if (current->ops && current->ops->readdir) {
+            int found = 0;
+            uint32_t index = 0;
+            vfs_node_t* child = NULL;
+
+            while (current->ops->readdir(current, index, &child) == E_OK) {
+                if (child && strcmp(child->name, component) == 0) {
+                    current = child;
+                    found = 1;
+                    break;
+                }
+                index++;
+            }
+
+            if(!found) return NULL;
+        }else{
+            return NULL;
+        }
+
+        *next_slash = saved;
+        if (*next_slash == '/') {
+            component = next_slash + 1;
+        } else {
+            break;
+        }
+    }
+
+    return current;
 }
 
 const char* vfs_basename(const char* path){
@@ -34,9 +147,8 @@ char* vfs_dirname(const char* path){
     static char dir[MAX_PATH];
     size_t len = strlen(path);
 
-    //Find last slash
     size_t last_slash = 0;
-    for(size_t i = 0; i < len; i++){
+    for(size_t i; i < len; i++){
         if(path[i] == '/'){
             last_slash = i;
         }
@@ -52,294 +164,142 @@ char* vfs_dirname(const char* path){
     return dir;
 }
 
-//Resolve a path to a file/directory
-file_t* vfs_resolve_path(const char* path){
-    if(!root) return NULL;
-
-    if(strcmp(path, "/") == 0){
-        return root;
-    }
-
-    file_t* current = root;
-
-    char path_copy[MAX_PATH];
-    strcpy(path_copy, path);
-
-    char* component = path_copy;
-    if(*component == '/') component++;
-
-    char* next_slash;
-    while(*component){
-        //Find next slash or string
-        next_slash = component;
-        while(*next_slash && *next_slash != '/') {
-            next_slash++;
-        }
-
-        char saved = *next_slash;
-        *next_slash = '\0';
-
-        file_t* child = current->first_child;
-        int found = 0;
-
-        while(child){
-            if(strcmp(child->name, component) == 0) {
-                current = child;
-                found = 1;
-                break;
-            }
-            child = child->next;
-        }
-
-        if(!found){
-            return NULL;
-        }
-
-        *next_slash = saved;
-        if(*next_slash ==  '/'){
-            component = next_slash + 1;
-        }else{
-            break;
-        }
-    }
-    return current;
-}
-
-file_t* vfs_create_file(const char* path){
-
-    for(size_t i = 0; i < strlen(path); i++){
-        if(i == '/' || i == '\\'){
-            console_perror("Destination path cannot include a / or \\");
-            return 0;
-        }
-    }
-
-    char* dir_path = vfs_dirname(path);
-    file_t* parent = vfs_resolve_path(dir_path);
-
-    if(!parent || parent->type != FILE_TYPE_DIRECTORY){
-        return NULL;
-    }
-
-    const char* filename = vfs_basename(path);
-
-    file_t* child = parent->first_child;
-    while(child){
-        if(strcmp(child->name, filename) == 0){
-            return child;
-        }
-        child = child->next;
-    }
-
-    file_t* file = (file_t*)kmalloc(sizeof(file_t));
-    strncpy(file->name, filename, MAX_FILENAME -1);
-    file->name[MAX_FILENAME - 1] = '\0';
-    file->type = FILE_TYPE_REGULAR;
-    file->data = NULL;
-    file->size = 0;
-    file->next = parent->first_child;
-    file->first_child = NULL;
-    file->parent = parent;
-
-    parent->first_child = file;
-
-    return file;
-}
-
-file_t* vfs_create_directory(const char* path){
-    char* dir_path = vfs_dirname(path);
-    file_t* parent = vfs_resolve_path(dir_path);
-
-    if(!parent || parent->type != FILE_TYPE_DIRECTORY){
-        return NULL;
-    }
-
-    const char* dirname = vfs_basename(path);
-
-    file_t* child = parent->first_child;
-    while(child){
-        if(strcmp(child->name, dirname) == 0){
-            return child;
-        }
-        child = child->next;
-    }
-
-    file_t* dir = (file_t*)kmalloc(sizeof(file_t));
-    strncpy(dir->name, dirname, MAX_FILENAME -1);
-    dir->name[MAX_FILENAME - 1] = '\0';
-    dir->type = FILE_TYPE_DIRECTORY;
-    dir->data = NULL;
-    dir->size = 0;
-    dir->next = parent->first_child;
-    dir->first_child = NULL;
-    dir->parent = parent;
-
-    parent->first_child = dir;
-
-    return dir;
-}
-
-file_t* vfs_open(const char* path){
+vfs_node_t* vfs_open(const char* path) {
     return vfs_resolve_path(path);
 }
 
-kerr_t vfs_write(file_t* file, const void* data, size_t size){
-    if(!file || file->type != FILE_TYPE_REGULAR){
-        return E_ISDIR;
-    }
+kerr_t vfs_close(vfs_node_t* node) {
+    if (!node || !node->ops || !node->ops->close) return E_OK;
+    return node->ops->close(node);
+}
 
-    if(file->data){
-        kfree(file->data);
-    }
+kerr_t vfs_read(vfs_node_t* node, void* buffer, size_t size, size_t* bytes_read) {
+    if (!node || !node->ops || !node->ops->read) return E_INVALID;
+    return node->ops->read(node, buffer, size, bytes_read);
+}
 
-    file->data = (uint8_t*)kmalloc(size);
-    if(!file->data){
-        file->size = 0;
+kerr_t vfs_write(vfs_node_t* node, const void* buffer, size_t size, size_t* bytes_written) {
+    if (!node || !node->ops || !node->ops->write) return E_INVALID;
+    return node->ops->write(node, buffer, size, bytes_written);
+}
+
+kerr_t vfs_create_file(const char* path) {
+    char* dir_path = vfs_dirname(path);
+    vfs_node_t* parent = vfs_resolve_path(dir_path);
+
+    if (!parent /*|| !parent->ops || !parent->ops->create*/) {
         return E_INVALID;
-    }
+    }else if(!parent->ops) return E_NOTFOUND;
+    else if(!parent->ops->create) return E_NOTDIR;
 
-    uint8_t* src = (uint8_t*)data;
-    for(size_t i = 0; i < size; i++){
-        file->data[i] = src[i];
-    }
+    const char* filename = vfs_basename(path);
+    vfs_node_t* new_file = NULL;
 
-    file->size = size;
-
-    return size;
+    return parent->ops->create(parent, filename, FILE_TYPE_REGULAR, &new_file);
 }
 
-kerr_t vfs_read(file_t* file, void* buffer, size_t size){
-    if(!file || file->type != FILE_TYPE_REGULAR){
-        return E_ISDIR;
-    }
+kerr_t vfs_create_directory(const char* path) {
+    char* dir_path = vfs_dirname(path);
+    vfs_node_t* parent = vfs_resolve_path(dir_path);
 
-    size_t to_read = (size < file->size) ? size : file->size;
+    if (!parent || !parent->ops || !parent->ops->create) return E_INVALID;
 
-    uint8_t* dst = (uint8_t*)buffer;
-    for(size_t i = 0; i < to_read; i++){
-        dst[i] = file->data[i];
-    }
+    const char* dirname = vfs_basename(path);
+    vfs_node_t* new_dir = NULL;
 
-    return to_read;
+    return parent->ops->create(parent, dirname, FILE_TYPE_DIRECTORY, &new_dir);
 }
 
-int vfs_delete(const char* path){
-    file_t* file = vfs_resolve_path(path);
-    if(!file || file == root){
-        return E_PERM;
-    }
+kerr_t vfs_delete(const char* path) {
+    vfs_node_t* node = vfs_resolve_path(path);
+    if (!node || !node->ops || !node->ops->delete) return E_INVALID;
+    return node->ops->delete(node);
+}
 
-    file_t* parent = file->parent;
+kerr_t vfs_list(const char* path) {
+    vfs_node_t* dir = vfs_resolve_path(path);
 
-    if(parent->first_child == file){
-        parent->first_child = file->next;
-    }else{
-        file_t* prev = parent->first_child;
-        while(prev && prev->next != file){
-            prev = prev->next;
+    if (!dir) return E_NOTFOUND;
+    if (dir->type != FILE_TYPE_DIRECTORY) return E_NOTDIR;
+    if (!dir->ops || !dir->ops->readdir) return E_INVALID;
+
+    uint32_t index = 0;
+    vfs_node_t* child = NULL;
+
+    while (dir->ops->readdir(dir, index, &child) == E_OK) {
+        if (child) {
+            console_set_color((console_color_attr_t){
+                    child->type == FILE_TYPE_DIRECTORY ? CONSOLE_COLOR_LIGHT_BLUE : CONSOLE_COLOR_WHITE,
+                    CONSOLE_COLOR_BLACK
+            });
+
+            console_puts(child->name);
+            if (child->type == FILE_TYPE_DIRECTORY) {
+                console_putc('/');
+            } else {
+                console_putc(' ');
+                char size_str[32];
+                uitoa(child->size, size_str);
+                console_puts(size_str);
+                console_puts(" bytes");
+            }
+            console_putc('\n');
         }
-        if(prev){
-            prev->next = file->next;
-        }
+        index++;
     }
 
-
-    if(file->data){
-        kfree(file->data);
-    }
-
-    kfree(file);
-
-    return 0;
+    console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
+    return E_OK;
 }
 
-kerr_t vfs_copy_file(const char* dest_path, file_t* source, size_t size){
-    if(source->type == FILE_TYPE_DIRECTORY){
-        return E_ISDIR;
-    }
-
-    for(size_t i = 0; i < strlen(dest_path); i++){
-        if(i == '/' || i == '\\'){
-            return E_INVALID;
-        }
-    }
-
-    file_t* dest_file = vfs_resolve_path(dest_path);
-    if(!dest_file){
-        dest_file = vfs_create_file(dest_path);
-    }
-
-    for(size_t i = 0; i < size; i++){
-        dest_file->data[i] = source->data[i];
-    }
-
-    return 0;
-}
-
-kerr_t vfs_list(const char* path){
-    file_t* dir = vfs_resolve_path(path);
-
-    if(!dir){
-        return E_NOTFOUND;
-    }
-
-    if(dir->type != FILE_TYPE_DIRECTORY){
-        return E_NOTDIR;
-    }
-
-    file_t* child = dir->first_child;
-    if(!child){
-        return E_NOTFOUND;
-    }
-
-    while(child){
-        console_set_color((console_color_attr_t){
-                child->type == FILE_TYPE_DIRECTORY ? CONSOLE_COLOR_LIGHT_BLUE : CONSOLE_COLOR_WHITE,
-                CONSOLE_COLOR_BLACK
-        });
-
-        console_puts(child->name);
-        if(child->type == FILE_TYPE_DIRECTORY){
-            console_putc('/');
-        }else{
-            console_putc(' ');
-            char size_str[32];
-            uitoa(child->size, size_str);
-            console_puts(size_str);
-            console_puts(" bytes");
-        }
-        console_putc('\n');
-
-        child = child->next;
-    }
-    console_set_color((console_color_attr_t) {CONSOLE_COLOR_WHITE,CONSOLE_COLOR_BLACK});
-}
-
-void vfs_print_tree(file_t* dir, int depth) {
-    if (!dir) dir = root;
+void vfs_print_tree(vfs_node_t* node, int depth) {
+    if (!node) node = vfs_root;
+    if (!node) return;
 
     for (int i = 0; i < depth; i++) {
         console_puts("  ");
     }
 
     console_set_color((console_color_attr_t){
-            dir->type == FILE_TYPE_DIRECTORY ? CONSOLE_COLOR_LIGHT_BLUE : CONSOLE_COLOR_WHITE,
+            node->type == FILE_TYPE_DIRECTORY ? CONSOLE_COLOR_LIGHT_BLUE : CONSOLE_COLOR_WHITE,
             CONSOLE_COLOR_BLACK
     });
 
-    console_puts(dir->name);
-    if (dir->type == FILE_TYPE_DIRECTORY) {
+    console_puts(node->name);
+    if (node->type == FILE_TYPE_DIRECTORY) {
         console_puts("/");
     }
     console_puts("\n");
 
     console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
 
-    if (dir->type == FILE_TYPE_DIRECTORY) {
-        file_t* child = dir->first_child;
-        while (child) {
-            vfs_print_tree(child, depth + 1);
-            child = child->next;
+    if (node->type == FILE_TYPE_DIRECTORY && node->ops && node->ops->readdir) {
+        uint32_t index = 0;
+        vfs_node_t* child = NULL;
+
+        while (node->ops->readdir(node, index, &child) == E_OK) {
+            if (child) {
+                vfs_print_tree(child, depth + 1);
+            }
+            index++;
         }
     }
+}
+
+kerr_t vfs_copy_file(const char* dest, const char* source) {
+    vfs_node_t* src = vfs_open(source);
+    if (!src || src->type != FILE_TYPE_REGULAR) return E_INVALID;
+
+    // Create destination file
+    kerr_t err = vfs_create_file(dest);
+    if (err != E_OK && err != E_EXISTS) return err;
+
+    vfs_node_t* dst = vfs_open(dest);
+    if (!dst) return E_NOTFOUND;
+
+    // Read source
+    void* buffer = (void*)src->fs_data; // Direct access for now
+    size_t bytes_written = 0;
+
+    return vfs_write(dst, buffer, src->size, &bytes_written);
 }

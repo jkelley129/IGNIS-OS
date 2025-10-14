@@ -29,6 +29,7 @@ OBJS = $(BUILD_DIR)/boot.o \
        $(BUILD_DIR)/string.o \
        $(BUILD_DIR)/memory.o \
        $(BUILD_DIR)/vfs.o \
+       $(BUILD_DIR)/ramfs.o \
        $(BUILD_DIR)/block.o \
        $(BUILD_DIR)/ata.o \
        $(BUILD_DIR)/nvme.o \
@@ -88,6 +89,9 @@ $(BUILD_DIR)/shell.o: shell/shell.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/vfs.o: fs/vfs.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/ramfs.o: fs/filesystems/ramfs.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/string.o: libc/string.c | $(BUILD_DIR)
