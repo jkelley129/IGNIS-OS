@@ -53,7 +53,7 @@ $(BUILD_DIR)/memory.o: mm/memory.c | $(BUILD_DIR)
 $(BUILD_DIR)/boot.o: boot.asm | $(BUILD_DIR)
 	$(NASM) -f elf64 $< -o $@
 
-$(BUILD_DIR)/idt_asm.o: idt.asm | $(BUILD_DIR)
+$(BUILD_DIR)/idt_asm.o: interrupts/idt.asm | $(BUILD_DIR)
 	$(NASM) -f elf64 $< -o $@
 
 $(BUILD_DIR)/vga.o: io/vga.c | $(BUILD_DIR)
