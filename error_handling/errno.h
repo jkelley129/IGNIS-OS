@@ -31,6 +31,23 @@ const char* k_strerror(kerr_t err);
     if (_err != ERR_OK) return _err; \
 } while (0)
 
+#define TRY_INIT(name, expr, err_count) do { \
+    console_puts("Initializing ");    \
+    console_puts(name);               \
+    console_puts("...   ");           \
+    status = expr;         \
+    if(status == E_OK) console_puts_color("[SUCCESS]\n", COLOR_SUCCESS); \
+    else{                         \
+        console_puts_color("[FAILED: ", COLOR_FAILURE);                \
+        console_puts(k_strerror(status));        \
+        console_putc('\n');                                     \
+        err_count++;              \
+    }                             \
+}while(0);
+
+#define TRY_CALL(expr) do { \
+    if(expr) expr;          \
+}while(0)
 
 
 

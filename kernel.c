@@ -18,20 +18,6 @@
 #define COLOR_SUCCESS (console_color_attr_t){CONSOLE_COLOR_GREEN, CONSOLE_COLOR_BLACK}
 #define COLOR_FAILURE (console_color_attr_t){CONSOLE_COLOR_RED, CONSOLE_COLOR_BLACK}
 
-#define TRY_INIT(name, expr, err_count) do { \
-    console_puts("Initializing ");    \
-    console_puts(name);               \
-    console_puts("...   ");           \
-    status = expr;         \
-    if(status == E_OK) console_puts_color("[SUCCESS]\n", COLOR_SUCCESS); \
-    else{                         \
-        console_puts_color("[FAILED: ", COLOR_FAILURE);                \
-        console_puts(k_strerror(status));        \
-        console_putc('\n');                                     \
-        err_count++;              \
-    }                             \
-}while(0);
-
 void kernel_main() {
     // Initialize the VGA text mode
     console_init(vga_get_driver());
