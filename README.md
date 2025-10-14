@@ -26,7 +26,8 @@ This is **NOT** a Linux distribution. It is currently just a kernel(userspace on
 - Clone the repo with `git clone https://github.com/jkelley129/IGNIS-OS.git && cd IGNIS-OS`
 - Compile and package the project with `make` or `make all`
   - The `Makefile` creates a ignis.iso file in iso/boot/ that is emulated by QEMU
-- Run the QEMU emulator with `make run`
+- If running with a disk image, run `make disks`, `make disk-ata`, or `make disk-nvme`. Note that only ATA is working at the moment
+- Run the QEMU emulator with `make run` if not working with disks, else use `make run-full`, `make run-ata`, or `make run-nvme` for your disk
 
 ## Current Features
 Features in rough chronological order of implementation
@@ -39,17 +40,16 @@ Features in rough chronological order of implementation
 - Agnostic block device I/O layer
 - Block device drivers
   - ATA
-  - NVMe
 
 ## Features I hope to add
-- (TEST) Disk drivers for persistent storage( IN PROGRESS )
-- Modularize structure and drivers ( NEXT TASK )
+- (TEST) Disk drivers for persistent storage[ ON HOLD ]
+- Modularize structure and drivers [ IN PROGRESS ]
   - Decouple vga from everything
   - Separate ramfs and vfs
   - Implement the error handling
   - Add generic driver registration system
   - Decouple static global state
-- Implementation of an on-disk filesystem ( PROJECTED NEXT TASK )
+- Implementation of an on-disk filesystem [ PROJECTED NEXT TASK ]
 - More standard filesystem(FAT32, or other)
 - More device drivers for more devices
 - Audio integration
