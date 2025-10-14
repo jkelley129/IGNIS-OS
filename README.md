@@ -31,7 +31,7 @@ This is **NOT** a Linux distribution. It is currently just a kernel(userspace on
 
 ## Current Features
 Features in rough chronological order of implementation
-- VGA for outputting text to the screen
+- Console layer for outputting text to the screen via VGA
 - Interrupt Descriptor Table for handling interrupts(keypresses, hardware interrupts)
 - Interactive kernel-level shell for debugging and functionality
 - Programmable Interval Timer with interrupt handling
@@ -42,21 +42,20 @@ Features in rough chronological order of implementation
   - ATA
 
 ## Features I hope to add
-- (TEST) Disk drivers for persistent storage[ ON HOLD ]
-- Modularize structure and drivers [ IN PROGRESS ]
-  - Decouple vga from everything
+- *(TEST)* Disk drivers for persistent storage **[ ON HOLD ]**
+- Modularize structure and drivers **[ IN PROGRESS ]**
+  - Decouple vga from everything **[ DONE ]**
   - Separate ramfs and vfs
-  - Implement the error handling
+  - Implement the error handling **[ DONE ]**
   - Add generic driver registration system
   - Decouple static global state
-- Implementation of an on-disk filesystem [ PROJECTED NEXT TASK ]
-- More standard filesystem(FAT32, or other)
+- Implementation of an on-disk filesystem(ext4) **[ PROJECTED NEXT TASK ]**
 - More device drivers for more devices
-- Audio integration
-- More sophisticated memory allocator(buddy allocator, slab allocator)
+- - More sophisticated memory allocator(buddy allocator, slab allocator)
 - User space with limited permissions
 - User applications(text editor, clock, stopwatch, utilities)
 - Support for executing user programs
+- Audio integration
 - Graphical User Interface(maybe)
 
 ## Contributing
