@@ -43,10 +43,10 @@ Features in rough chronological order of implementation
   - ATA
 
 ## Features I hope to add
-- *(TEST)* Disk drivers for persistent storage **[ ON HOLD ]**
+- *(TEST)* Disk drivers for persistent storage(on branch [disk_testing](https://github.com/jkelley129/IGNIS-OS/tree/disk_testing)) **[ ON HOLD ]**
 - Modularize structure and drivers **[ IN PROGRESS ]**
   - Decouple vga from everything **[ DONE ]**
-  - Separate ramfs and vfs
+  - Separate ramfs and vfs **[ DONE ]**
   - Implement the error handling **[ DONE ]**
   - Add generic driver registration system
   - Decouple static global state
