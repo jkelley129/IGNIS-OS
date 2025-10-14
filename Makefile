@@ -100,14 +100,24 @@ $(OUTPUT_DIR):
 # DISK IMAGE TARGETS
 # ============================================================================
 
-# Create disk images
+# Create both disk images
 disks:
 	@echo "Creating disk images..."
 	@qemu-img create -f raw $(ATA_DISK) 512M
 	@qemu-img create -f raw $(NVME_DISK) 1G
-	@echo "✓ Disk images created successfully!"
+	@echo "Disk images created successfully!"
 	@echo "  - $(ATA_DISK): 512 MB"
 	@echo "  - $(NVME_DISK): 1 GB"
+
+disk-ata:
+	@echo "Creating ATA disk image..."
+	@qemu-img create -f raw $(ATA_DISK) 512M
+	@echo "Disk created successfully"
+
+disk-nvme:
+	@echo "Creating NVMe disk image..."
+	@qemu-img create -f raw $(NVMe_DISK) 1G
+	@echo "Disk created successfully"
 
 # Create larger disk images
 disks-large:
