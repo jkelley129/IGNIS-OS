@@ -19,7 +19,7 @@ kerr_t driver_registry_init(void){
 kerr_t driver_register(driver_t* driver){
     if(!driver) return E_INVALID;
 
-    if(driver_count <= MAX_DRIVERS) return E_NOMEM;
+    if(driver_count >= MAX_DRIVERS) return E_NOMEM;
 
     //Check for duplicate names
     for(uint8_t i = 0; i < MAX_DRIVERS; i++){
