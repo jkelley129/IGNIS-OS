@@ -1,4 +1,6 @@
 #include "shell.h"
+
+#include "driver.h"
 #include "../console/console.h"
 #include "../libc/string.h"
 #include "../drivers/pit.h"
@@ -20,6 +22,7 @@ static const shell_command_t commands[] = {
         {"about", "About IGNIS OS", cmd_about},
         {"uptime", "Show system uptime", cmd_uptime},
         {"ticks", "Show PIT tick count", cmd_ticks},
+        {"lsdrv","Print registered drivers", cmd_lsdrv},
         {"meminfo", "Display memory statistics", cmd_meminfo},
         {"memtest", "Run memory allocator test", cmd_memtest},
         {"ls", "List directory contents", cmd_ls},
@@ -170,6 +173,10 @@ void cmd_ticks(int argc, char** argv) {
     uitoa(ticks, num_str);
     console_puts(num_str);
     console_puts("\n\n");
+}
+
+void cmd_lsdrv(int argc, char** argv) {
+    driver_list();
 }
 
 void cmd_meminfo(int argc, char** argv) {

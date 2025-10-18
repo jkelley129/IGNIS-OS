@@ -1,14 +1,15 @@
 # IGNIS Shell - Command Sheet
 
 ## System Commands
-| Command | Usage | Description |
-|---------|-------|-------------|
-| `help` | `help` | Display all available commands |
-| `about` | `about` | Show OS information |
-| `clear` | `clear` | Clear the screen |
+| Command  | Usage | Description |
+|----------|-------|-------------|
+| `help`   | `help` | Display all available commands |
+| `about`  | `about` | Show OS information |
+| `clear`  | `clear` | Clear the screen |
 | `uptime` | `uptime` | Show system uptime |
-| `ticks` | `ticks` | Show PIT timer ticks |
-| `echo` | `echo <text>` | Print text to screen |
+| `ticks`  | `ticks` | Show PIT timer ticks |
+| `echo`   | `echo <text>` | Print text to screen |
+| `lsdrv`  | `lsdrv` | List all registered drivers |
 
 ## Memory Commands
 | Command | Usage | Description |
