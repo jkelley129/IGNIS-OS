@@ -15,6 +15,7 @@ typedef enum {
 } kerr_t;
 
 const char* k_strerror(kerr_t err);
+void k_pkerr(kerr_t err);
 
 // Helper macros for common patterns
 #define RETURN_IF_ERROR(expr) \
@@ -35,14 +36,12 @@ const char* k_strerror(kerr_t err);
     console_puts("Initializing ");    \
     console_puts(name);               \
     console_puts("...   ");           \
-    status = expr;         \
+    status = expr;                    \
     if(status == E_OK) console_puts_color("[SUCCESS]\n", COLOR_SUCCESS); \
-    else{                         \
-        console_puts_color("[FAILED: ", COLOR_FAILURE);                \
-        console_puts(k_strerror(status));        \
-        console_putc('\n');                                     \
-        err_count++;              \
-    }                             \
+    else{                             \
+        k_pkerr(status);              \
+        err_count++;                  \
+    }                                 \
 }while(0);
 
 #endif

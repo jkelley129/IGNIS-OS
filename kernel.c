@@ -35,10 +35,10 @@ void kernel_main() {
 
     TRY_INIT("Memory", memory_init(HEAP_START, HEAP_SIZE),err_count)
 
-    // NEW: Initialize VFS layer
+    // Initialize VFS layer
     TRY_INIT("VFS Layer", vfs_init(), err_count)
 
-    // NEW: Create and mount RAM filesystem
+    // Create and mount RAM filesystem
     console_puts("Mounting RAM File System...   ");
     filesystem_t* ramfs = NULL;
     status = ramfs_create_fs(&ramfs);
@@ -47,19 +47,15 @@ void kernel_main() {
         if (status == E_OK) {
             console_puts_color("[SUCCESS]\n", COLOR_SUCCESS);
         } else {
-            console_puts_color("[FAILED: ", COLOR_FAILURE);
-            console_puts(k_strerror(status));
-            console_putc('\n');
+            k_pkerr(status);
             err_count++;
         }
     } else {
-        console_puts_color("[FAILED]: ", COLOR_FAILURE);
-        console_puts(k_strerror(status));
-        console_putc('\n');
+        k_pkerr(status);
         err_count++;
     }
 
-    TRY_INIT("keyboard", keyboard_init(), err_count)
+    TRY_INIT("Keyboard", keyboard_init(), err_count)
 
     TRY_INIT("PIT", pit_init(100), err_count)
 

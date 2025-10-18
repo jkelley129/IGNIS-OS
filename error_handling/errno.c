@@ -1,4 +1,5 @@
 #include "errno.h"
+#include "console/console.h"
 
 const char* k_strerror(kerr_t err){
     switch(err){
@@ -13,5 +14,12 @@ const char* k_strerror(kerr_t err){
         case E_PERM: return "Permission denied";
         case E_HARDWARE: return "Hardware fault";
     }
+}
+
+void k_pkerr(kerr_t err) {
+    console_puts_color("[FAILED]: ",
+        (console_color_attr_t) {CONSOLE_COLOR_RED, CONSOLE_COLOR_BLACK});
+    console_puts(k_strerror(err));
+    console_putc('\n');
 }
 
