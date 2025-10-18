@@ -22,7 +22,7 @@ typedef struct {
     uint64_t base;          // Changed from uint32_t to uint64_t
 } __attribute__((packed)) idt_ptr_t;
 
-kerr_t idt_init();
+kerr_t idt_register();
 void idt_set_gate(uint8_t num, uint64_t base, uint16_t sel, uint8_t flags);
 
 #endif

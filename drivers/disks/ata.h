@@ -75,6 +75,6 @@ typedef struct {
 
 // Function declarations
 // Only initialization is exposed - all I/O goes through block device abstraction
-kerr_t ata_init();
+kerr_t ata_register();
 
 #endif

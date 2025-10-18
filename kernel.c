@@ -31,7 +31,7 @@ void kernel_main() {
     kerr_t status;
 
     // Initialize interrupts and keyboard
-    TRY_INIT("IDT", idt_init(), err_count)
+    TRY_INIT("IDT", idt_register(), err_count)
 
     TRY_INIT("Memory", memory_init(HEAP_START, HEAP_SIZE),err_count)
 
@@ -55,13 +55,14 @@ void kernel_main() {
         err_count++;
     }
 
-    TRY_INIT("Keyboard", keyboard_init(), err_count)
+    //Initialize drivers
+    TRY_INIT("Keyboard", keyboard_register(), err_count)
 
-    TRY_INIT("PIT", pit_init(100), err_count)
+    TRY_INIT("PIT", pit_register(100), err_count)
 
-    TRY_INIT("Block Device Layer",block_init(),err_count)
+    TRY_INIT("Block Device Layer",block_register(),err_count)
 
-    TRY_INIT("ATA",ata_init(),err_count)
+    TRY_INIT("ATA",ata_register(),err_count)
 
     if(err_count == 0) console_puts_color("\nReady! System is running.\n", COLOR_SUCCESS);
     else{

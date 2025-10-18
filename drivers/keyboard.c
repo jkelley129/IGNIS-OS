@@ -46,7 +46,7 @@ static kerr_t keyboard_driver_init(driver_t* drv) {
 }
 
 // Public init function - registers the driver
-kerr_t keyboard_init() {
+kerr_t keyboard_register() {
     return driver_register(&keyboard_driver);
 }
 

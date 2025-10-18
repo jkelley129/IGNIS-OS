@@ -90,6 +90,6 @@ static kerr_t idt_driver_init(driver_t* drv) {
 }
 
 // Public init function - registers the driver
-kerr_t idt_init() {
+kerr_t idt_register() {
     return driver_register(&idt_driver);
 }

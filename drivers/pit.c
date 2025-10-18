@@ -49,7 +49,7 @@ static kerr_t pit_driver_init(driver_t* drv) {
 }
 
 // Public init function - registers the driver
-kerr_t pit_init(uint32_t frequency) {
+kerr_t pit_register(uint32_t frequency) {
     // Note: For now we ignore the frequency parameter in registration
     // The actual init uses a default of 100 Hz
     // This could be improved by storing frequency in driver_data

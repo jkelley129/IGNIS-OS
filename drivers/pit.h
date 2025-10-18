@@ -31,7 +31,7 @@
 
 typedef void (*pit_callback_t)(void);
 
-kerr_t pit_init(uint32_t frequency);
+kerr_t pit_register(uint32_t frequency);
 void pit_set_callback(pit_callback_t callback);
 uint64_t pit_get_ticks(void);
 void pit_handler(void);

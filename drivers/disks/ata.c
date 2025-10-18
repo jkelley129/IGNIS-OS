@@ -252,6 +252,6 @@ static kerr_t ata_driver_init(driver_t* drv) {
 }
 
 // Public init function - registers the driver
-kerr_t ata_init() {
+kerr_t ata_register() {
     return driver_register(&ata_driver);
 }

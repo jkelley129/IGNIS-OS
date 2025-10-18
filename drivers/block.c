@@ -33,7 +33,7 @@ static kerr_t block_driver_init(driver_t* drv) {
 }
 
 // Public init function - registers the driver
-kerr_t block_init(){
+kerr_t block_register(){
     return driver_register(&block_layer_driver);
 }
 
