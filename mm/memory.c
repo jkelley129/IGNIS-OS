@@ -3,17 +3,49 @@
 #include "../libc/string.h"
 #include "error_handling/errno.h"
 
+// Full definition of heap structure (hidden from other files)
+struct heap {
+    uint64_t start;
+    uint64_t end;
+    uint64_t current;
+    memory_block_t* free_list;
+};
 
-static uint64_t heap_start = 0;
-static uint64_t heap_end = 0;
-static uint64_t heap_current = 0;
-static memory_block_t* free_list = 0;
+// Global kernel heap - initialized once at boot
+static heap_t* kernel_heap = NULL;
 
-kerr_t memory_init(uint64_t start, uint64_t size){
-    heap_start = start;
-    heap_end = start + size;
-    heap_current = start;
-    free_list = 0;
+// Static helper functions (internal only)
+static memory_block_t* find_free_block(heap_t* heap, size_t size) {
+    memory_block_t* current = heap->free_list;
+
+    while (current) {
+        if (current->is_free && current->size >= size) {
+            return current;
+        }
+        current = current->next;
+    }
+    return NULL;
+}
+
+static void coalesce_free_blocks(heap_t* heap) {
+    memory_block_t* current = heap->free_list;
+    while (current && current->next) {
+        if (current->is_free && current->next->is_free) {
+            current->size += current->next->size + MEMORY_BLOCK_HEADER_SIZE;
+            current->next = current->next->next;
+        } else {
+            current = current->next;
+        }
+    }
+}
+
+kerr_t memory_init(uint64_t start, uint64_t size) {
+    // Allocate heap structure from the heap memory itself
+    kernel_heap = (heap_t*)start;
+    kernel_heap->start = start + sizeof(heap_t);
+    kernel_heap->end = start + size;
+    kernel_heap->current = kernel_heap->start;
+    kernel_heap->free_list = NULL;
 
     console_puts("Memory initialized");
     char addr_str[32];
@@ -25,21 +57,27 @@ kerr_t memory_init(uint64_t start, uint64_t size){
     return E_OK;
 }
 
-void* kmalloc(size_t size){
-    if(size == 0){
-        return 0;
-    }
+heap_t* memory_get_kernel_heap(void) {
+    return kernel_heap;
+}
 
-    size = (size + 7) & ~7;
+void* kmalloc(size_t size) {
+    if (!kernel_heap) return NULL;
+    if (size == 0) return NULL;
 
-    memory_block_t* current = free_list;
-    memory_block_t* prev = 0;
+    size = (size + 7) & ~7;  // Align to 8 bytes
 
-    while(current){
-        if(current->is_free && current->size >= size){
+    // Try to find free block
+    memory_block_t* block = find_free_block(kernel_heap, size);
+    memory_block_t* prev = NULL;
+    memory_block_t* current = kernel_heap->free_list;
+
+    while (current) {
+        if (current->is_free && current->size >= size) {
             current->is_free = 0;
 
-            if(current->size >= size + MEMORY_BLOCK_HEADER_SIZE + 16){
+            // Split block if large enough
+            if (current->size >= size + MEMORY_BLOCK_HEADER_SIZE + 16) {
                 memory_block_t* new_block = (memory_block_t*)((uint64_t)current + MEMORY_BLOCK_HEADER_SIZE + size);
                 new_block->size = current->size - size - MEMORY_BLOCK_HEADER_SIZE;
                 new_block->is_free = 1;
@@ -55,79 +93,74 @@ void* kmalloc(size_t size){
         current = current->next;
     }
 
-    uint64_t block_addr = heap_current;
+    // Need to allocate new block
+    uint64_t block_addr = kernel_heap->current;
     uint64_t total_size = size + MEMORY_BLOCK_HEADER_SIZE;
-    if(heap_current + total_size > heap_end){
-        console_puts("[MEMORY ERROR]:Out of memory!\n");
-        return 0;
+
+    if (kernel_heap->current + total_size > kernel_heap->end) {
+        console_puts("[MEMORY ERROR]: Out of memory!\n");
+        return NULL;
     }
 
-    memory_block_t* block = (memory_block_t*)block_addr;
-    block->size = size;
-    block->is_free = 0;
-    block->next = 0;
+    memory_block_t* new_block = (memory_block_t*)block_addr;
+    new_block->size = size;
+    new_block->is_free = 0;
+    new_block->next = NULL;
 
-    if(free_list == 0){
-        free_list = block;
-    }else{
-        memory_block_t* last = free_list;
-        while(last->next){
+    if (kernel_heap->free_list == NULL) {
+        kernel_heap->free_list = new_block;
+    } else {
+        memory_block_t* last = kernel_heap->free_list;
+        while (last->next) {
             last = last->next;
         }
-        last->next = block;
+        last->next = new_block;
     }
-    heap_current += total_size;
+
+    kernel_heap->current += total_size;
     return (void*)(block_addr + MEMORY_BLOCK_HEADER_SIZE);
 }
 
-void kfree(void* ptr){
-    if(!ptr) return;
+void kfree(void* ptr) {
+    if (!ptr || !kernel_heap) return;
 
     memory_block_t* block = (memory_block_t*)((uint64_t)ptr - MEMORY_BLOCK_HEADER_SIZE);
     block->is_free = 1;
 
-    memory_block_t* current = free_list;
-    while(current && current->next){
-        if(current->is_free && current->next->is_free){
-            current->size += current->next->size + MEMORY_BLOCK_HEADER_SIZE;
-            current->next = current->next->next;
-        }else{
-            current = current->next;
-        }
-    }
+    coalesce_free_blocks(kernel_heap);
 }
 
-void* kcalloc(size_t num, size_t size){
+void* kcalloc(size_t num, size_t size) {
     size_t total_size = num * size;
-
     void* ptr = kmalloc(total_size);
 
-    if(ptr){
+    if (ptr) {
         memset(ptr, 0, total_size);
     }
 
     return ptr;
 }
 
-void* krealloc(void* ptr, size_t new_size){
-    if(!ptr) return kmalloc(new_size);
+void* krealloc(void* ptr, size_t new_size) {
+    if (!ptr) return kmalloc(new_size);
 
-    if(new_size == 0){
+    if (new_size == 0) {
         kfree(ptr);
+        return NULL;
     }
 
     memory_block_t* block = (memory_block_t*)((uint64_t)ptr - MEMORY_BLOCK_HEADER_SIZE);
 
-    if(block->size >= new_size){
+    if (block->size >= new_size) {
         return ptr;
     }
 
     void* new_ptr = kmalloc(new_size);
-    if(!new_ptr) return 0;
+    if (!new_ptr) return NULL;
 
     uint8_t* src = (uint8_t*)ptr;
     uint8_t* dst = (uint8_t*)new_ptr;
-    for(size_t i = 0; i < block->size; i++){
+    for (size_t i = 0; i < block->size; i++) {
         dst[i] = src[i];
     }
 
@@ -135,25 +168,30 @@ void* krealloc(void* ptr, size_t new_size){
     return new_ptr;
 }
 
-uint64_t memory_get_free(){
-    return heap_end - heap_current;
+uint64_t memory_get_free(void) {
+    if (!kernel_heap) return 0;
+    return kernel_heap->end - kernel_heap->current;
 }
 
-uint64_t memory_get_used(){
-    return heap_current - heap_start;
+uint64_t memory_get_used(void) {
+    if (!kernel_heap) return 0;
+    return kernel_heap->current - kernel_heap->start;
 }
 
-uint64_t memory_get_total(){
-    return heap_end - heap_start;
+uint64_t memory_get_total(void) {
+    if (!kernel_heap) return 0;
+    return kernel_heap->end - kernel_heap->start;
 }
 
-void memory_print_stats() {
+void memory_print_stats(void) {
+    if (!kernel_heap) return;
+
     console_puts("\n=== Memory Statistics ===\n");
 
     char num_str[32];
-    uint64_t total_size = heap_end - heap_start;
-    uint64_t used_size = heap_current - heap_start;
-    uint64_t free_size = heap_end - heap_current;
+    uint64_t total_size = kernel_heap->end - kernel_heap->start;
+    uint64_t used_size = kernel_heap->current - kernel_heap->start;
+    uint64_t free_size = kernel_heap->end - kernel_heap->current;
 
     console_puts("Total heap: ");
     uitoa(total_size / 1024, num_str);
@@ -173,7 +211,7 @@ void memory_print_stats() {
     // Count blocks
     uint64_t total_blocks = 0;
     uint64_t free_blocks = 0;
-    memory_block_t* current = free_list;
+    memory_block_t* current = kernel_heap->free_list;
 
     while (current) {
         total_blocks++;
