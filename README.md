@@ -46,14 +46,8 @@ Features in rough chronological order of implementation
 
 ## Features I hope to add
 - *(TEST)* Disk drivers for persistent storage(on branch [disk_testing](https://github.com/jkelley129/IGNIS-OS/tree/disk_testing)) **[ ON HOLD ]**
-- Modularize structure and drivers **[ IN PROGRESS ]**
-  - Decouple vga from everything **[ DONE ]**
-  - Separate ramfs and vfs **[ DONE ]**
-  - Implement the error handling **[ DONE ]**
-  - Add generic driver registration system **[ DONE ]**
-  - Decouple static global state
-- Implementation of an on-disk filesystem(ext4) **[ NEXT TASK ]**
--  More sophisticated memory allocator(buddy allocator, slab allocator)
+- Implementation of an on-disk filesystem(ext4) **[ IN PROGRESS ]**
+- More sophisticated memory allocator(buddy allocator, slab allocator)
 - More device drivers for more devices
 - User space with limited permissions
 - Support for executing user programs
