@@ -41,6 +41,8 @@ Features in rough chronological order of implementation
 - Agnostic block device I/O layer
 - Block device drivers
   - ATA
+- Error handling with enums(`kerr_t`) and helper functions/macros
+- Generic driver registration system with features like priority and dependencies
 
 ## Features I hope to add
 - *(TEST)* Disk drivers for persistent storage(on branch [disk_testing](https://github.com/jkelley129/IGNIS-OS/tree/disk_testing)) **[ ON HOLD ]**
@@ -48,14 +50,14 @@ Features in rough chronological order of implementation
   - Decouple vga from everything **[ DONE ]**
   - Separate ramfs and vfs **[ DONE ]**
   - Implement the error handling **[ DONE ]**
-  - Add generic driver registration system
+  - Add generic driver registration system **[ DONE ]**
   - Decouple static global state
 - Implementation of an on-disk filesystem(ext4) **[ NEXT TASK ]**
+-  More sophisticated memory allocator(buddy allocator, slab allocator)
 - More device drivers for more devices
-- - More sophisticated memory allocator(buddy allocator, slab allocator)
 - User space with limited permissions
-- User applications(text editor, clock, stopwatch, utilities)
 - Support for executing user programs
+- User applications(text editor, clock, stopwatch, utilities)
 - Audio integration
 - Graphical User Interface(maybe)
 
