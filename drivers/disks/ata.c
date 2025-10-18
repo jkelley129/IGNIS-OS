@@ -1,5 +1,6 @@
 #include "ata.h"
 #include "../block.h"
+#include "../driver.h"
 #include "../../io/ports.h"
 #include "../../console/console.h"
 #include "../../libc/string.h"
@@ -14,6 +15,21 @@ typedef struct {
 //Array of ATA block devices
 static block_device_t ata_block_devices[4];
 static ata_device_data_t ata_device_data[4];
+
+// Forward declaration of driver init function
+static kerr_t ata_driver_init(driver_t* drv);
+
+// Driver structure for ATA
+static driver_t ata_driver = {
+    .name = "ATA",
+    .type = DRIVER_TYPE_BLOCK,
+    .version = 1,
+    .priority = 40,  // Initialize after block layer (priority 30)
+    .init = ata_driver_init,
+    .cleanup = NULL,
+    .depends_on = "Block Layer",  // Depends on block device layer
+    .driver_data = NULL
+};
 
 static void ata_wait_busy(uint16_t base){
     while (inb(base + 7) & ATA_SR_BSY);
@@ -189,8 +205,8 @@ static kerr_t ata_identify(uint8_t drive_num){
     return E_OK;
 }
 
-kerr_t ata_init() {
-
+// Driver initialization function (actual ATA detection and setup)
+static kerr_t ata_driver_init(driver_t* drv) {
     // Initialize ATA device data
     // Primary master
     ata_device_data[0].base = ATA_PRIMARY_DATA;
@@ -222,14 +238,20 @@ kerr_t ata_init() {
     for (int i = 0; i < 4; i++) {
         if (ata_identify(i) == E_OK) {
             char num_str[32];
-            console_puts("  ");
+            console_puts("    ");
             console_puts(ata_block_devices[i].label);
             console_puts(": Found (");
             uitoa(ata_block_devices[i].block_count / 2048, num_str);
             console_puts(num_str);
-            console_puts(" MB)");
+            console_puts(" MB)\n");
             count++;
         }
     }
+
     return count != 0 ? E_OK : E_NOTFOUND;
+}
+
+// Public init function - registers the driver
+kerr_t ata_init() {
+    return driver_register(&ata_driver);
 }

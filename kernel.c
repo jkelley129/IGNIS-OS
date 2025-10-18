@@ -1,3 +1,4 @@
+#include "driver.h"
 #include "console/console.h"
 #include "interrupts/idt.h"
 #include "drivers/keyboard.h"
@@ -76,6 +77,9 @@ void kernel_main() {
         console_puts(" Initialization(s) failed!\n\n");
         console_set_color((console_color_attr_t) {CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
     }
+
+    driver_init_all();
+    driver_list();
 
     //Enable interrupts
     asm volatile("sti");

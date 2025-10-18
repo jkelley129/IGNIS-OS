@@ -2,17 +2,39 @@
 #include "../console/console.h"
 #include "../libc/string.h"
 #include "../error_handling/errno.h"
+#include "driver.h"
 
 // Array of registered block devices
 static block_device_t* block_devices[MAX_BLOCK_DEVICES];
 static uint8_t device_count = 0;
 
-kerr_t block_init(){
+// Forward declaration of driver init function
+static kerr_t block_driver_init(driver_t* drv);
+
+// Driver structure for block device layer
+static driver_t block_layer_driver = {
+    .name = "Block Layer",
+    .type = DRIVER_TYPE_BLOCK,
+    .version = 1,
+    .priority = 30,  // Initialize after IDT and timers
+    .init = block_driver_init,
+    .cleanup = NULL,
+    .depends_on = "",  // No dependencies
+    .driver_data = NULL
+};
+
+// Driver initialization function
+static kerr_t block_driver_init(driver_t* drv) {
     for(int i = 0; i < MAX_BLOCK_DEVICES; i++){
         block_devices[i] = 0;
     }
     device_count = 0;
     return E_OK;
+}
+
+// Public init function - registers the driver
+kerr_t block_init(){
+    return driver_register(&block_layer_driver);
 }
 
 int block_register_device(block_device_t* device){

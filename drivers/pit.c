@@ -1,11 +1,32 @@
 #include "pit.h"
 #include "../io/ports.h"
+#include "driver.h"
 #include "error_handling/errno.h"
+#include "libc/stddef.h"
 
 static volatile uint64_t pit_ticks = 0;
 static pit_callback_t tick_callback = 0;
 
-kerr_t pit_init(uint32_t frequency) {
+// Forward declaration of driver init function
+static kerr_t pit_driver_init(driver_t* drv);
+
+// Driver structure
+static driver_t pit_driver = {
+    .name = "PIT",
+    .type = DRIVER_TYPE_TIMER,
+    .version = 1,
+    .priority = 20,  // Initialize after IDT (priority 10)
+    .init = pit_driver_init,
+    .cleanup = NULL,
+    .depends_on = "IDT",  // Depends on interrupt system
+    .driver_data = NULL
+};
+
+// Driver initialization function (actual PIT setup)
+static kerr_t pit_driver_init(driver_t* drv) {
+    // Default frequency: 100 Hz
+    uint32_t frequency = 100;
+
     // Calculate the divisor for the desired frequency
     uint32_t divisor = PIT_FREQUENCY / frequency;
 
@@ -25,6 +46,14 @@ kerr_t pit_init(uint32_t frequency) {
     pit_ticks = 0;
 
     return E_OK;
+}
+
+// Public init function - registers the driver
+kerr_t pit_init(uint32_t frequency) {
+    // Note: For now we ignore the frequency parameter in registration
+    // The actual init uses a default of 100 Hz
+    // This could be improved by storing frequency in driver_data
+    return driver_register(&pit_driver);
 }
 
 void pit_set_callback(pit_callback_t callback) {

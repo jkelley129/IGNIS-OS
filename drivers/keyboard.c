@@ -1,6 +1,8 @@
 #include "keyboard.h"
-#include "../console/console.h"
+#include "console/console.h"
+#include "driver.h"
 #include "error_handling/errno.h"
+#include "libc/stddef.h"
 
 // US QWERTY keyboard layout scancode to ASCII
 static const char scancode_to_ascii[] = {
@@ -22,9 +24,30 @@ static const char scancode_to_ascii_shift[] = {
 static uint8_t shift_pressed = 0;
 static keyboard_callback_t key_callback = 0;
 
-kerr_t keyboard_init() {
-    // Keyboard is initialized by the BIOS, nothing needed
+// Forward declaration of driver init function
+static kerr_t keyboard_driver_init(driver_t* drv);
+
+// Driver structure
+static driver_t keyboard_driver = {
+    .name = "Keyboard",
+    .type = DRIVER_TYPE_INPUT,
+    .version = 1,
+    .priority = 20,  // Initialize after IDT (priority 10)
+    .init = keyboard_driver_init,
+    .cleanup = NULL,
+    .depends_on = "IDT",  // Depends on interrupt system
+    .driver_data = NULL
+};
+
+// Driver initialization function
+static kerr_t keyboard_driver_init(driver_t* drv) {
+    // Keyboard is initialized by the BIOS, nothing special needed
     return E_OK;
+}
+
+// Public init function - registers the driver
+kerr_t keyboard_init() {
+    return driver_register(&keyboard_driver);
 }
 
 void keyboard_set_callback(keyboard_callback_t callback) {
