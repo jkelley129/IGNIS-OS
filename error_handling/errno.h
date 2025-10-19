@@ -33,15 +33,21 @@ void k_pkerr(kerr_t err);
 } while (0)
 
 #define TRY_INIT(name, expr, err_count) do { \
-    console_puts("Initializing ");    \
-    console_puts(name);               \
-    console_puts("...   ");           \
-    status = expr;                    \
-    if(status == E_OK) console_puts_color("[SUCCESS]\n", COLOR_SUCCESS); \
-    else{                             \
-        k_pkerr(status);              \
-        err_count++;                  \
-    }                                 \
+    serial_debug_puts("Initializing ");\
+    serial_debug_puts(name);           \
+    serial_debug_puts("...");          \
+    console_puts("Initializing ");     \
+    console_puts(name);                \
+    console_puts("...   ");            \
+    status = expr;                     \
+    if(status == E_OK) {               \
+        console_puts_color("[SUCCESS]\n", COLOR_SUCCESS); \
+        serial_debug_puts("[SUCCESS]\n");                 \
+    }                                  \
+    else{                              \
+        k_pkerr(status);               \
+        err_count++;                   \
+    }                                  \
 }while(0);
 
 #endif

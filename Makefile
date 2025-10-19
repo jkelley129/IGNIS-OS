@@ -21,6 +21,7 @@ OBJS = $(BUILD_DIR)/boot.o \
        $(BUILD_DIR)/kernel.o \
        $(BUILD_DIR)/driver.o \
        $(BUILD_DIR)/vga.o \
+       $(BUILD_DIR)/serial.o \
        $(BUILD_DIR)/console.o \
        $(BUILD_DIR)/idt.o \
        $(BUILD_DIR)/keyboard.o \
@@ -63,6 +64,9 @@ $(BUILD_DIR)/driver.o: drivers/driver.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/vga.o: io/vga.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/serial.o: io/serial.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/console.o: console/console.c | $(BUILD_DIR)
@@ -160,9 +164,9 @@ diskinfo:
 # QEMU RUN TARGETS
 # ============================================================================
 
-# Run without any disks (original behavior)
+# Run without any disks
 run:
-	$(QEMU) -cdrom $(OUTPUT_DIR)/ignis.iso
+	$(QEMU) -cdrom $(OUTPUT_DIR)/ignis.iso -serial file:serial.log
 
 # Run with ATA disk only
 run-ata: $(OUTPUT_DIR)/ignis.iso
@@ -171,7 +175,8 @@ run-ata: $(OUTPUT_DIR)/ignis.iso
 		qemu-img create -f raw $(ATA_DISK) 512M; \
 	fi
 	$(QEMU) -cdrom $(OUTPUT_DIR)/ignis.iso \
-		-drive file=$(ATA_DISK),format=raw,if=ide
+		-drive file=$(ATA_DISK),format=raw,if=ide \
+		-serial file:serial.log
 
 # Run with NVMe disk only
 run-nvme: $(OUTPUT_DIR)/ignis.iso
@@ -181,7 +186,8 @@ run-nvme: $(OUTPUT_DIR)/ignis.iso
 	fi
 	$(QEMU) -cdrom $(OUTPUT_DIR)/ignis.iso \
 		-drive file=$(NVME_DISK),if=none,id=nvm \
-		-device nvme,serial=deadbeef,drive=nvm
+		-device nvme,serial=deadbeef,drive=nvm \
+		-serial file:serial.log
 
 # Run with both ATA and NVMe disks
 run-full: $(OUTPUT_DIR)/ignis.iso
@@ -197,7 +203,8 @@ run-full: $(OUTPUT_DIR)/ignis.iso
 		-drive file=$(ATA_DISK),format=raw,if=ide \
 		-drive file=$(NVME_DISK),if=none,id=nvm,format=raw \
 		-device nvme,serial=deadbeef,drive=nvm \
-		-m 512M
+		-m 512M \
+		-serial file:serial.log
 
 # Run with debug output
 run-debug: $(OUTPUT_DIR)/ignis.iso
@@ -209,7 +216,8 @@ run-debug: $(OUTPUT_DIR)/ignis.iso
 		-d guest_errors,int \
 		-D qemu.log \
 		-no-reboot \
-		-no-shutdown
+		-no-shutdown \
+		-serial file:serial.log
 
 # Run with GDB debugging support
 run-gdb: $(OUTPUT_DIR)/ignis.iso
@@ -221,7 +229,7 @@ run-gdb: $(OUTPUT_DIR)/ignis.iso
 	@echo "Then in GDB: target remote localhost:1234"
 	$(QEMU) -cdrom $(OUTPUT_DIR)/ignis.iso \
 		-drive file=$(ATA_DISK),format=raw,if=ide \
-		-s -S
+		-s -S -serial file:serial.log
 
 # Run with multiple NVMe devices
 run-multi-nvme: $(OUTPUT_DIR)/ignis.iso
@@ -240,7 +248,7 @@ run-multi-nvme: $(OUTPUT_DIR)/ignis.iso
 		-device nvme,serial=nvme001,drive=nvm1 \
 		-drive file=nvme_disk2.img,if=none,id=nvm2,format=raw \
 		-device nvme,serial=nvme002,drive=nvm2 \
-		-m 512M
+		-m 512M -serial file:serial.log
 
 # Run in snapshot mode (changes not saved)
 run-snapshot: $(OUTPUT_DIR)/ignis.iso
@@ -254,7 +262,7 @@ run-snapshot: $(OUTPUT_DIR)/ignis.iso
 	$(QEMU) -cdrom $(OUTPUT_DIR)/ignis.iso \
 		-drive file=$(ATA_DISK),format=raw,if=ide,snapshot=on \
 		-drive file=$(NVME_DISK),if=none,id=nvm,format=raw,snapshot=on \
-		-device nvme,serial=deadbeef,drive=nvm
+		-device nvme,serial=deadbeef,drive=nvm -serial file:serial.log
 
 # ============================================================================
 # UTILITY TARGETS
@@ -315,7 +323,7 @@ clean:
 	rm -rf $(BUILD_DIR)/* $(OUTPUT_DIR)/* iso/boot/kernel.elf
 
 # Clean object files only
-clean_objs:
+clean-objs:
 	rm -rf $(BUILD_DIR)/*
 
 # Clean disk images

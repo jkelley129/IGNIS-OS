@@ -9,7 +9,8 @@
 #include "mm/memory.h"
 #include "fs/vfs.h"
 #include "error_handling/errno.h"
-#include "vga.h"
+#include "io/vga.h"
+#include "io/serial.h"
 #include "fs/filesystems/ramfs.h"
 
 // Define heap area - 1MB heap starting at 2MB
@@ -20,11 +21,24 @@
 #define COLOR_FAILURE (console_color_attr_t){CONSOLE_COLOR_RED, CONSOLE_COLOR_BLACK}
 
 void kernel_main() {
+    //init serial first for debugging things later
+    kerr_t serial_status = serial_init(COM1);
+
     // Initialize the VGA text mode
     console_init(vga_get_driver());
+
+    // Test serial output
+    serial_debug_puts("=== IGNIS OS Serial Debug Log ===\n");
+    serial_debug_puts("Serial port initialized successfully\n");
+    serial_debug_puts("Starting kernel initialization...\n\n");
+
     console_puts("Welcome!\n");
     console_puts_color("IGNIS v0.0.01\n", (console_color_attr_t) {CONSOLE_COLOR_RED, CONSOLE_COLOR_BLACK});
     console_puts_color("---- Developed by Josh Kelley ----\n\n",(console_color_attr_t) {CONSOLE_COLOR_LIGHT_BLUE, CONSOLE_COLOR_BLACK});
+
+    if (serial_status == E_OK) {
+        console_puts("Serial port: COM1 (see serial.log)\n");
+    }
 
     //Define error count
     uint8_t err_count = 0;
