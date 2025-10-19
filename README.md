@@ -44,10 +44,17 @@ Features in rough chronological order of implementation
 - Error handling with enums(`kerr_t`) and helper functions/macros
 - Generic driver registration system with features like priority and dependencies
 
-## Features I hope to add
+## TODO
 - *(TEST)* Disk drivers for persistent storage(on branch [disk_testing](https://github.com/jkelley129/IGNIS-OS/tree/disk_testing)) **[ ON HOLD ]**
-- Implementation of an on-disk filesystem(ext4) **[ IN PROGRESS ]**
-- More sophisticated memory allocator(buddy allocator, slab allocator)
+- Update architecture + add nice to haves
+  - Add serial output
+  - Add memory layout header
+  - Add PMM/VMM
+  - Add kernel panic
+  - Polish(macros + nice to haves)
+- Page-aligned allocator
+- More sophisticated memory allocator(buddy allocator, slab allocator) 
+- Implementation of an on-disk filesystem(ext4)
 - More device drivers for more devices
 - User space with limited permissions
 - Support for executing user programs
