@@ -198,3 +198,59 @@ void vmm_flush_tlb(void) {
     asm volatile("mov %%cr3, %0" : "=r"(cr3));
     asm volatile("mov %0, %%cr3" :: "r"(cr3) : "memory");
 }
+
+void page_fault_handler(uint64_t fault_addr, uint64_t error_code) {
+    console_puts("\n\n");
+    console_set_color((console_color_attr_t){CONSOLE_COLOR_RED, CONSOLE_COLOR_BLACK});
+    console_puts("*** PAGE FAULT ***\n");
+    console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
+
+    console_puts("Faulting address: 0x");
+    char addr_str[32];
+    uitoa(fault_addr, addr_str);
+    console_puts(addr_str);
+    console_puts("\n");
+
+    console_puts("Error code: 0x");
+    uitoa(error_code, addr_str);
+    console_puts(addr_str);
+    console_puts("\n\n");
+
+    console_puts("Details:\n");
+    if (error_code & 0x1) {
+        console_puts("  - Page protection violation\n");
+    } else {
+        console_puts("  - Page not present\n");
+    }
+
+    if (error_code & 0x2) {
+        console_puts("  - Write access\n");
+    } else {
+        console_puts("  - Read access\n");
+    }
+
+    if (error_code & 0x4) {
+        console_puts("  - User mode\n");
+    } else {
+        console_puts("  - Kernel mode\n");
+    }
+
+    if (error_code & 0x8) {
+        console_puts("  - Reserved bit violation\n");
+    }
+
+    if (error_code & 0x10) {
+        console_puts("  - Instruction fetch\n");
+    }
+
+    console_puts("\n");
+    console_set_color((console_color_attr_t){CONSOLE_COLOR_RED, CONSOLE_COLOR_BLACK});
+    console_puts("System halted.\n");
+    console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
+
+    // Halt the system
+    asm volatile("cli");
+    while(1) {
+        asm volatile("hlt");
+    }
+}

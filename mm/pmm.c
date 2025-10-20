@@ -140,7 +140,7 @@ uint64_t pmm_alloc_pages(size_t count) {
 
 void pmm_free_pages(uint64_t phys_addr, size_t count) {
     for (size_t i = 0; i < count; i++) {
-        pmm_free_page(phys_addr + (i + PAGE_SIZE));
+        pmm_free_page(phys_addr + (i * PAGE_SIZE));
     }
 }
 

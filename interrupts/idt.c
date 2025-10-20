@@ -10,6 +10,7 @@
 extern void idt_load(uint64_t);
 extern void irq0();
 extern void irq1();
+extern void irq_page_fault();
 extern void irq_default();
 
 static idt_entry_t idt[IDT_ENTRIES];
@@ -73,6 +74,9 @@ static kerr_t idt_driver_init(driver_t* drv) {
 
     // Set up keyboard interrupt (IRQ1 = interrupt 33)
     idt_set_gate(33, (uint64_t)irq1, 0x08, 0x8E);
+
+    // Set up page fault handler (Exception 14)
+    idt_set_gate(14, (uint64_t)irq_page_fault, 0x08, 0x8E);
 
     idt_load((uint64_t)&idt_ptr);
     // After idt_load((uint64_t)&idt_ptr);

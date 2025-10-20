@@ -39,4 +39,6 @@ void vmm_flush_tlb_page(uint64_t virt_addr);
 // Flush entire TLB
 void vmm_flush_tlb(void);
 
+void page_fault_handler(uint64_t fault_addr, uint64_t error_code);
+
 #endif
