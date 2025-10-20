@@ -1,6 +1,7 @@
 #include "shell.h"
 
 #include "driver.h"
+#include "serial.h"
 #include "../console/console.h"
 #include "../libc/string.h"
 #include "../drivers/pit.h"
@@ -8,6 +9,7 @@
 #include "../mm/memory.h"
 #include "../fs/vfs.h"
 #include "../error_handling/errno.h"
+#include "mm/pmm.h"
 
 #define CMD_BUFFER_SIZE 256
 
@@ -25,6 +27,8 @@ static const shell_command_t commands[] = {
         {"lsdrv","Print registered drivers", cmd_lsdrv},
         {"meminfo", "Display memory statistics", cmd_meminfo},
         {"memtest", "Run memory allocator test", cmd_memtest},
+        {"pmminfo", "Show PMM info", cmd_pmminfo},
+        {"pagetest", "Test page allocation", cmd_pagetest},
         {"ls", "List directory contents", cmd_ls},
         {"tree", "Display directory tree", cmd_tree},
         {"touch", "Create a new file", cmd_touch},
@@ -242,6 +246,60 @@ void cmd_memtest(int argc, char** argv) {
         console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
     }
 }
+
+void cmd_pmminfo(int argc, char** argv) {
+    pmm_print_stats();
+}
+
+void cmd_pagetest(int argc, char** argv) {
+    console_puts("\n=== Page Allocation Test ===\n");
+
+    console_puts("Allocating 3 pages...\n");
+    uint64_t page1 = pmm_alloc_page();
+    uint64_t page2 = pmm_alloc_page();
+    uint64_t page3 = pmm_alloc_page();
+
+    if (page1 && page2 && page3) {
+        char addr_str[32];
+
+        console_puts("Page 1: ");
+        serial_puthex(COM1, page1, 16);
+        uitoa(page1, addr_str);
+        console_puts(addr_str);
+        console_putc('\n');
+
+        console_puts("Page 2: ");
+        uitoa(page2, addr_str);
+        console_puts(addr_str);
+        console_putc('\n');
+
+        console_puts("Page 3: ");
+        uitoa(page3, addr_str);
+        console_puts(addr_str);
+        console_putc('\n');
+
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_GREEN, CONSOLE_COLOR_BLACK});
+        console_puts("✓ Allocation successful\n");
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
+
+        console_puts("\nFreeing pages...\n");
+        pmm_free_page(page1);
+        pmm_free_page(page2);
+        pmm_free_page(page3);
+
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_GREEN, CONSOLE_COLOR_BLACK});
+        console_puts("✓ Free successful\n\n");
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
+
+        pmm_print_stats();
+    } else {
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_RED, CONSOLE_COLOR_BLACK});
+        console_puts("✗ Allocation failed\n\n");
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
+    }
+}
+
+// ============================================================================
 
 void cmd_ls(int argc, char** argv) {
     const char* path = (argc > 1) ? argv[1] : "/";

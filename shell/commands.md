@@ -12,10 +12,12 @@
 | `lsdrv`  | `lsdrv` | List all registered drivers |
 
 ## Memory Commands
-| Command | Usage | Description |
-|---------|-------|-------------|
-| `meminfo` | `meminfo` | Show memory statistics |
-| `memtest` | `memtest` | Run memory allocator test |
+| Command    | Usage      | Description                 |
+|------------|------------|-----------------------------|
+| `meminfo`  | `meminfo`  | Show memory statistics      |
+| `memtest`  | `memtest`  | Run memory allocator test   |
+| `pmminfo`  | `pmminfo`  | Show PMM stats              |
+| `pagetest` | `pagetest` | Test page memory allocation |
 
 ## File System Commands
 | Command | Usage | Description |

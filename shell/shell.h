@@ -28,6 +28,8 @@ void cmd_ticks(int argc, char** argv);
 void cmd_lsdrv(int argc, char** argv);
 void cmd_meminfo(int argc, char** argv);
 void cmd_memtest(int argc, char** argv);
+void cmd_pmminfo(int argc, char** argv);
+void cmd_pagetest(int argc, char** argv);
 void cmd_ls(int argc, char** argv);
 void cmd_tree(int argc, char** argv);
 void cmd_touch(int argc, char** argv);
