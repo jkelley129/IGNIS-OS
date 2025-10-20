@@ -2,7 +2,10 @@
 #include "../console/console.h"
 
 // VGA-specific state
-static uint16_t* vga_buffer = (uint16_t*)(uint64_t)VGA_MEMORY;
+// VGA buffer is at physical 0xB8000, but we need to access it via higher-half
+// For now, we'll keep using 0xB8000 since we have identity mapping in place
+// TODO: Once we have proper virtual memory, map VGA buffer properly
+static uint16_t* vga_buffer = (uint16_t*)0xB8000ULL;
 static uint16_t vga_cursor = 0;
 static console_color_attr_t vga_color = {CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK};
 

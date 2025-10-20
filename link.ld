@@ -1,26 +1,43 @@
-/* link.ld - 64-bit version */
+/* link.ld */
 ENTRY(_start)
 
-SECTIONS {
-    . = 1M;
+KERNEL_VIRT_BASE = 0xFFFFFFFF80000000;
+KERNEL_PHYS_BASE = 0x100000;
 
-    .multiboot ALIGN(8) : {
+SECTIONS {
+    /* Boot code stays at low physical addresses */
+    . = KERNEL_PHYS_BASE;
+
+    .multiboot ALIGN(8) : AT(ADDR(.multiboot)) {
         *(.multiboot)
     }
 
-    .text ALIGN(4K) : {
+    .boot_data ALIGN(16) : AT(ADDR(.boot_data)) {
+        build/boot.o(.data)
+        build/boot.o(.bss)
+    }
+
+    .boot_text ALIGN(4K) : AT(ADDR(.boot_text)) {
+        build/boot.o(.text)
+    }
+
+    /* Kernel in higher half */
+    . += KERNEL_VIRT_BASE;
+
+    .text ALIGN(4K) : AT(ADDR(.text) - KERNEL_VIRT_BASE) {
+        build/kernel_entry.o(.text)
         *(.text)
     }
 
-    .rodata ALIGN(4K) : {
+    .rodata ALIGN(4K) : AT(ADDR(.rodata) - KERNEL_VIRT_BASE) {
         *(.rodata)
     }
 
-    .data ALIGN(4K) : {
+    .data ALIGN(4K) : AT(ADDR(.data) - KERNEL_VIRT_BASE) {
         *(.data)
     }
 
-    .bss ALIGN(4K) : {
+    .bss ALIGN(4K) : AT(ADDR(.bss) - KERNEL_VIRT_BASE) {
         *(.bss)
         *(COMMON)
     }

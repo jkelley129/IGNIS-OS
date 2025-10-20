@@ -1,115 +1,89 @@
-  ; boot.asm
+; boot.asm - Simple bootloader that stays in low memory
 section .multiboot
 align 8
 multiboot_header:
-    dd 0xE85250D6         ; magic
+    dd 0xE85250D6
     dd 0
-    dd multiboot_header_end - multiboot_header  ; Header length
-    dd -(0xE85250D6 + 0 + (multiboot_header_end - multiboot_header)) ;Checksum
-
-    ;End tag
-    dw 0; Type
-    dw 0; Flags
-    dd 8; Size
+    dd multiboot_header_end - multiboot_header
+    dd -(0xE85250D6 + 0 + (multiboot_header_end - multiboot_header))
+    dw 0
+    dw 0
+    dd 8
 multiboot_header_end:
 
-section .bss
+; Everything in this file uses low physical addresses
+section .data
+align 16
+boot_gdt:
+    dq 0
+    dq 0x00209A0000000000  ; code
+    dq 0x0000920000000000  ; data
+boot_gdt_end:
+
+boot_gdt_ptr:
+    dw boot_gdt_end - boot_gdt - 1
+    dd boot_gdt
+
 align 4096
-p4_table:
-    resb 4096
-p3_table:
-    resb 4096
-p2_table:
-    resb 4096
-stack_bottom:
-    resb 16384
-stack_top:
+boot_p4:
+    times 512 dq 0
+boot_p3:
+    times 512 dq 0
+boot_p2:
+    times 512 dq 0
+boot_p3_high:
+    times 512 dq 0
+boot_p2_high:
+    times 512 dq 0
 
 section .text
 bits 32
 global _start
-extern kernel_main
 
 _start:
-    mov esp, stack_top
+    cli
 
-    ; Save multiboot info
+    ; Stack below 1MB
+    mov esp, 0x90000
+
+    ; Save multiboot pointer
     mov edi, ebx
 
-    ; Check for long mode support
-    call check_long_mode
+    ; Setup identity mapping and higher-half mapping
+    ; P4[0] = P3 identity
+    mov eax, boot_p3
+    or eax, 3
+    mov [boot_p4], eax
 
-    ; Set up page tables
-    call setup_page_tables
+    ; P4[511] = P3 higher half
+    mov eax, boot_p3_high
+    or eax, 3
+    mov [boot_p4 + 511*8], eax
 
-    ; Enable paging
-    call enable_paging
+    ; P3[0] = P2 identity
+    mov eax, boot_p2
+    or eax, 3
+    mov [boot_p3], eax
 
-    ; Load GDT
-    lgdt [gdt64.pointer]
+    ; P3_high[510] = P2 higher half
+    mov eax, boot_p2_high
+    or eax, 3
+    mov [boot_p3_high + 510*8], eax
 
-    ; Jump to 64-bit code
-    jmp gdt64.code:long_mode_start
+    ; Map first 4MB identity with 2MB pages
+    mov eax, 0x83  ; 0MB, present+write+huge
+    mov [boot_p2], eax
+    mov eax, 0x200083  ; 2MB
+    mov [boot_p2 + 8], eax
 
-check_long_mode:
-    ; Check for CPUID support
-    pushfd
-    pop eax
-    mov ecx, eax
-    xor eax, 1 << 21
-    push eax
-    popfd
-    pushfd
-    pop eax
-    push ecx
-    popfd
-    cmp eax, ecx
-    je .no_long_mode
+    ; Map first 4MB to higher half with 2MB pages
+    mov eax, 0x83
+    mov [boot_p2_high], eax
+    mov eax, 0x200083
+    mov [boot_p2_high + 8], eax
 
-    ; Check for extended CPUID
-    mov eax, 0x80000000
-    cpuid
-    cmp eax, 0x80000001
-    jb .no_long_mode
-
-    ; Check for long mode
-    mov eax, 0x80000001
-    cpuid
-    test edx, 1 << 29
-    jz .no_long_mode
-
-    ret
-
-.no_long_mode:
-    hlt
-
-setup_page_tables:
-    ; Map P4[0] to P3
-    mov eax, p3_table
-    or eax, 0b11  ; present + writable
-    mov [p4_table], eax
-
-    ; Map P3[0] to P2
-    mov eax, p2_table
-    or eax, 0b11
-    mov [p3_table], eax
-
-    ; Map P2 entries (identity map first 2MB with huge pages)
-    mov ecx, 0
-.map_p2_table:
-    mov eax, 0x200000  ; 2MB
-    mul ecx
-    or eax, 0b10000011  ; present + writable + huge page
-    mov [p2_table + ecx * 8], eax
-    inc ecx
-    cmp ecx, 512
-    jne .map_p2_table
-
-    ret
-
-enable_paging:
-    ; Load P4 into CR3
-    mov eax, p4_table
+    ; Load page table
+    mov eax, boot_p4
     mov cr3, eax
 
     ; Enable PAE
@@ -117,7 +91,7 @@ enable_paging:
     or eax, 1 << 5
     mov cr4, eax
 
-    ; Enable long mode in EFER MSR
+    ; Enable long mode
     mov ecx, 0xC0000080
     rdmsr
     or eax, 1 << 8
@@ -128,31 +102,23 @@ enable_paging:
     or eax, 1 << 31
     mov cr0, eax
 
-    ret
+    ; Load GDT
+    lgdt [boot_gdt_ptr]
+
+    ; Far jump to 64-bit code
+    jmp 0x08:start64
 
 bits 64
-long_mode_start:
-    ; Clear segment registers
-    mov ax, gdt64.data
+start64:
+    ; Setup segments
+    mov ax, 0x10
     mov ss, ax
     mov ds, ax
     mov es, ax
     mov fs, ax
     mov gs, ax
 
-    ; Call kernel
-    call kernel_main
-
-    ; Hang if kernel returns
-    hlt
-
-section .rodata
-gdt64:
-    dq 0  ; null descriptor
-.code: equ $ - gdt64
-    dq (1<<41) | (1<<43) | (1<<44) | (1<<47) | (1<<53)  ; code segment: R (readable, bit 41), E (execute, bit 43), S (code/data, bit 44), P (present, bit 47), L (long mode, bit 53)
-.data: equ $ - gdt64
-    dq (1<<41) | (1<<44) | (1<<47)  ; data segment: W (writable, bit 41), S (code/data, bit 44), P (present, bit 47)
-.pointer:
-    dw $ - gdt64 - 1
-    dq gdt64
+    ; Now jump to higher-half kernel
+    ; The kernel_entry symbol will be at higher-half address
+    extern kernel_entry
+    jmp kernel_entry

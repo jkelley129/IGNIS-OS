@@ -7,6 +7,7 @@
 #include "drivers/disks/ata.h"
 #include "shell/shell.h"
 #include "mm/memory.h"
+#include "mm/memory_layout.h"
 #include "fs/vfs.h"
 #include "error_handling/errno.h"
 #include "io/vga.h"
@@ -32,6 +33,13 @@ void kernel_main() {
     serial_debug_puts("Serial port initialized successfully\n");
     serial_debug_puts("Starting kernel initialization...\n\n");
 
+    // Log kernel addresses
+    serial_debug_puts("Kernel virtual base: ");
+    serial_puthex(COM1, VIRT_KERNEL_BASE, 16);
+    serial_debug_puts("\n");
+
+    serial_debug_puts("Starting kernel init\n");
+
     console_puts("Welcome!\n");
     console_puts_color("IGNIS v0.0.01\n", (console_color_attr_t) {CONSOLE_COLOR_RED, CONSOLE_COLOR_BLACK});
     console_puts_color("---- Developed by Josh Kelley ----\n\n",(console_color_attr_t) {CONSOLE_COLOR_LIGHT_BLUE, CONSOLE_COLOR_BLACK});
@@ -47,18 +55,20 @@ void kernel_main() {
     // Initialize interrupts and keyboard
     TRY_INIT("IDT", idt_register(), err_count)
 
-    TRY_INIT("Memory", memory_init(HEAP_START, HEAP_SIZE),err_count)
+    TRY_INIT("Memory", memory_init(PHYS_HEAP_START, PHYS_HEAP_SIZE),err_count)
 
     // Initialize VFS layer
     TRY_INIT("VFS Layer", vfs_init(), err_count)
 
     // Create and mount RAM filesystem
+    serial_debug_puts("Mounting RAM File System... ");
     console_puts("Mounting RAM File System...   ");
     filesystem_t* ramfs = NULL;
     status = ramfs_create_fs(&ramfs);
     if (status == E_OK) {
         status = vfs_mount(ramfs, "/");
         if (status == E_OK) {
+            serial_debug_puts("[SUCCESS]\n");
             console_puts_color("[SUCCESS]\n", COLOR_SUCCESS);
         } else {
             k_pkerr(status);

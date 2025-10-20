@@ -18,6 +18,7 @@ NVME_DISK = $(OUTPUT_DIR)/nvme_disk.img
 
 # Object files
 OBJS = $(BUILD_DIR)/boot.o \
+       $(BUILD_DIR)/kernel_entry.o \
        $(BUILD_DIR)/kernel.o \
        $(BUILD_DIR)/driver.o \
        $(BUILD_DIR)/vga.o \
@@ -58,6 +59,9 @@ $(BUILD_DIR)/boot.o: boot.asm | $(BUILD_DIR)
 	$(NASM) -f elf64 $< -o $@
 
 $(BUILD_DIR)/idt_asm.o: interrupts/idt.asm | $(BUILD_DIR)
+	$(NASM) -f elf64 $< -o $@
+
+$(BUILD_DIR)/kernel_entry.o: kernel_entry.asm | $(BUILD_DIR)
 	$(NASM) -f elf64 $< -o $@
 
 $(BUILD_DIR)/driver.o: drivers/driver.c | $(BUILD_DIR)
