@@ -47,6 +47,17 @@ char serial_getc(uint16_t port);
 #define serial_debug_puts(s)   serial_puts(COM1, s)
 #define serial_debug_write(d,l) serial_write(COM1, d, l)
 
+//Convenience macros for both serial and console
+#define multiple_putc(c) do { \
+    serial_putc(COM1, c); \
+    console_putc(c); \
+}while (0)
+
+#define multiple_puts(s) do { \
+serial_puts(COM1, s); \
+console_puts(s); \
+}while (0)
+
 // Hex output helper for debugging
 void serial_puthex(uint16_t port, uint64_t value, int width);
 
