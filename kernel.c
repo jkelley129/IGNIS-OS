@@ -13,6 +13,8 @@
 #include "io/vga.h"
 #include "io/serial.h"
 #include "fs/filesystems/ramfs.h"
+#include "mm/pmm.h"
+#include "mm/vmm.h"
 
 // Define heap area - 1MB heap starting at 2MB
 #define HEAP_START 0x200000
@@ -56,6 +58,9 @@ void kernel_main() {
     TRY_INIT("IDT", idt_register(), err_count)
 
     TRY_INIT("Memory", memory_init(PHYS_HEAP_START, PHYS_HEAP_SIZE),err_count)
+
+    TRY_INIT("PMM", pmm_init(), err_count)
+    TRY_INIT("VMM", vmm_init(), err_count)
 
     // Initialize VFS layer
     TRY_INIT("VFS Layer", vfs_init(), err_count)

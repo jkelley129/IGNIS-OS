@@ -79,3 +79,165 @@ kerr_t pmm_init(void) {
     serial_debug_puts(num_str);
     serial_debug_puts(" MB\n");
 }
+
+uint64_t pmm_alloc_page(void) {
+    //Find first free page
+    for (size_t i = 0; i < total_pages; i++) {
+        if (!bitmap_test(i)) {
+            bitmap_set(i);
+            used_pages++;
+            return page_to_addr(i);
+        }
+    }
+
+    //Out of memory(would return E_NOMEM but return type must be uint64_t)
+    return 0;
+}
+
+void pmm_free_page(uint64_t phys_addr) {
+    if (phys_addr < PHYS_LOW_MEM_START || phys_addr >= PHYS_HEAP_END) return;
+
+    if (!IS_PAGE_ALIGNED(phys_addr)) return;
+
+    uint32_t page = addr_to_page(phys_addr);
+    if (page >= total_pages) return;
+
+    if (bitmap_test(page)) {
+        bitmap_clear(page);
+        used_pages--;
+    }
+}
+
+uint64_t pmm_alloc_pages(size_t count) {
+    if (count == 0) return 0;
+    if (count == 1) return pmm_alloc_page();
+
+    //Find contiguous free pages
+    uint32_t contiguous = 0;
+    uint32_t start = 0;
+
+    for (uint32_t i = 0; i < total_pages; i++) {
+        if (!bitmap_test(i)) {
+            if (contiguous == 0) start = i;
+            contiguous++;
+
+            if (contiguous == count) {
+                //Found enough pages
+                for (uint32_t j = start; j < start + count; j++) {
+                    bitmap_set(j);
+                }
+
+                used_pages+=count;
+                return page_to_addr(start);
+            }
+        }else {
+            contiguous = 0;
+        }
+    }
+
+    return 0; //No pages
+}
+
+void pmm_free_pages(uint64_t phys_addr, size_t count) {
+    for (size_t i = 0; i < count; i++) {
+        pmm_free_page(phys_addr + (i + PAGE_SIZE));
+    }
+}
+
+void pmm_mark_region_used(uint64_t start, uint64_t end) {
+    //Align to boundries
+    start = PAGE_ALIGN_DOWN(start);
+    end = PAGE_ALIGN_UP(end);
+
+    //Only mark pages in region
+    if (start < PHYS_FREE_START) start = PHYS_FREE_START;
+    if (end > PHYS_MEMORY_END) start = PHYS_MEMORY_END;
+    if (start >= end) return;
+
+    uint32_t start_page = addr_to_page(start);
+    uint32_t end_page = addr_to_page(end);
+
+    for (uint32_t i = start_page; i < end_page && i < total_pages; i++) {
+        if (!bitmap_test(i)) {
+            bitmap_set(i);
+            used_pages++;
+        }
+    }
+}
+
+void pmm_mark_region_free(uint64_t start, uint64_t end) {
+    start = PAGE_ALIGN_DOWN(start);
+    end = PAGE_ALIGN_UP(end);
+    if (start < PHYS_FREE_START) start = PHYS_FREE_START;
+    if (end > PHYS_MEMORY_END) start = PHYS_MEMORY_END;
+    if (start >= end) return;
+
+    uint32_t start_page = addr_to_page(start);
+    uint32_t end_page = addr_to_page(end);
+
+    for (uint32_t i = start_page; i < end_page && i < total_pages; i++) {
+        if (bitmap_test(i)) {
+            bitmap_clear(i);
+            used_pages--;
+        }
+    }
+}
+
+uint32_t pmm_get_total_pages(void) {
+    return total_pages;
+}
+
+uint32_t pmm_get_used_pages(void) {
+    return used_pages;
+}
+
+uint32_t pmm_get_free_pages(void) {
+    return total_pages - used_pages;
+}
+
+uint64_t pmm_get_total_memory(void) {
+    return (uint64_t)total_pages * PAGE_SIZE;
+}
+
+uint64_t pmm_get_used_memory(void) {
+    return (uint64_t)used_pages * PAGE_SIZE;
+}
+
+uint64_t pmm_get_free_memory(void) {
+    return (uint64_t)pmm_get_free_pages() * PAGE_SIZE;
+}
+
+void pmm_print_stats(void) {
+    console_puts("\n=== Physical Memory Manager ===\n");
+
+    char num_str[32];
+
+    console_puts("Total memory: ");
+    uitoa(pmm_get_total_memory() / 1024 / 1024, num_str);
+    console_puts(num_str);
+    console_puts(" MB (");
+    uitoa(total_pages, num_str);
+    console_puts(num_str);
+    console_puts(" pages)\n");
+
+    console_puts("Used memory:  ");
+    uitoa(pmm_get_used_memory() / 1024 / 1024, num_str);
+    console_puts(num_str);
+    console_puts(" MB (");
+    uitoa(used_pages, num_str);
+    console_puts(num_str);
+    console_puts(" pages)\n");
+
+    console_puts("Free memory:  ");
+    uitoa(pmm_get_free_memory() / 1024 / 1024, num_str);
+    console_puts(num_str);
+    console_puts(" MB (");
+    uitoa(pmm_get_free_pages(), num_str);
+    console_puts(num_str);
+    console_puts(" pages)\n");
+
+    console_puts("Page size:    ");
+    uitoa(PAGE_SIZE, num_str);
+    console_puts(num_str);
+    console_puts(" bytes\n\n");
+}

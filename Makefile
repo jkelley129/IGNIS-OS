@@ -31,6 +31,8 @@ OBJS = $(BUILD_DIR)/boot.o \
        $(BUILD_DIR)/shell.o \
        $(BUILD_DIR)/string.o \
        $(BUILD_DIR)/memory.o \
+       $(BUILD_DIR)/pmm.o \
+       $(BUILD_DIR)/vmm.o \
        $(BUILD_DIR)/vfs.o \
        $(BUILD_DIR)/ramfs.o \
        $(BUILD_DIR)/block.o \
@@ -50,9 +52,6 @@ iso: $(OBJS)
 
 # Compilation rules
 $(BUILD_DIR)/kernel.o: kernel.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-$(BUILD_DIR)/memory.o: mm/memory.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/boot.o: boot.asm | $(BUILD_DIR)
@@ -99,6 +98,15 @@ $(BUILD_DIR)/errno.o: error_handling/errno.c | $(BUILD_DIR)
 
 $(BUILD_DIR)/shell.o: shell/shell.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/memory.o: mm/memory.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/pmm.o: mm/pmm.c | $(BUILD_DIR)
+	$(CC)  $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/vmm.o: mm/vmm.c | $(BUILD_DIR)
+	$(CC)  $(CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/vfs.o: fs/vfs.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
