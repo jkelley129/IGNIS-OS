@@ -255,26 +255,25 @@ void cmd_pagetest(int argc, char** argv) {
     console_puts("\n=== Page Allocation Test ===\n");
 
     console_puts("Allocating 3 pages...\n");
-    uint64_t page1 = pmm_alloc_page();
-    uint64_t page2 = pmm_alloc_page();
-    uint64_t page3 = pmm_alloc_page();
+    void* page1 = kalloc_pages(1);
+    void* page2 = kalloc_pages(1);
+    void* page3 = kalloc_pages(1);
 
     if (page1 && page2 && page3) {
         char addr_str[32];
 
-        console_puts("Page 1: ");
-        serial_puthex(COM1, page1, 16);
-        uitoa(page1, addr_str);
+        console_puts("Page 1: 0x");
+        uitoa((uint64_t)page1, addr_str);
         console_puts(addr_str);
         console_putc('\n');
 
-        console_puts("Page 2: ");
-        uitoa(page2, addr_str);
+        console_puts("Page 2: 0x");
+        uitoa((uint64_t)page2, addr_str);
         console_puts(addr_str);
         console_putc('\n');
 
-        console_puts("Page 3: ");
-        uitoa(page3, addr_str);
+        console_puts("Page 3: 0x");
+        uitoa((uint64_t)page3, addr_str);
         console_puts(addr_str);
         console_putc('\n');
 
@@ -282,13 +281,39 @@ void cmd_pagetest(int argc, char** argv) {
         console_puts("✓ Allocation successful\n");
         console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
 
+        // Actually write to the pages!
+        console_puts("\nWriting to pages...\n");
+        uint8_t* p1 = (uint8_t*)page1;
+        uint8_t* p2 = (uint8_t*)page2;
+        uint8_t* p3 = (uint8_t*)page3;
+
+        p1[0] = 0xAA;
+        p1[4095] = 0xBB;
+        p2[0] = 0xCC;
+        p2[4095] = 0xDD;
+        p3[0] = 0xEE;
+        p3[4095] = 0xFF;
+
+        console_puts("Reading from pages...\n");
+        if (p1[0] == 0xAA && p1[4095] == 0xBB &&
+            p2[0] == 0xCC && p2[4095] == 0xDD &&
+            p3[0] == 0xEE && p3[4095] == 0xFF) {
+            console_set_color((console_color_attr_t){CONSOLE_COLOR_GREEN, CONSOLE_COLOR_BLACK});
+            console_puts("✓ Read/Write successful\n");
+            console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
+        } else {
+            console_set_color((console_color_attr_t){CONSOLE_COLOR_RED, CONSOLE_COLOR_BLACK});
+            console_puts("✗ Read/Write verification failed\n");
+            console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
+        }
+
         console_puts("\nFreeing pages...\n");
-        pmm_free_page(page1);
-        pmm_free_page(page2);
-        pmm_free_page(page3);
+        kfree_pages(page1, 1);
+        kfree_pages(page2, 1);
+        kfree_pages(page3, 1);
 
         console_set_color((console_color_attr_t){CONSOLE_COLOR_GREEN, CONSOLE_COLOR_BLACK});
-        console_puts("✓ Free successful\n\n");
+        console_puts("✓ Test complete!\n\n");
         console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
 
         pmm_print_stats();

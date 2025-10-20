@@ -1,4 +1,4 @@
-; boot.asm - Simple bootloader that stays in low memory
+; boot.asm - Bootloader with 128MB direct map
 section .multiboot
 align 8
 multiboot_header:
@@ -11,7 +11,6 @@ multiboot_header:
     dd 8
 multiboot_header_end:
 
-; Everything in this file uses low physical addresses
 section .data
 align 16
 boot_gdt:
@@ -34,6 +33,12 @@ boot_p2:
 boot_p3_high:
     times 512 dq 0
 boot_p2_high:
+    times 512 dq 0
+
+; NEW: Direct map page tables
+boot_p3_direct:
+    times 512 dq 0
+boot_p2_direct:
     times 512 dq 0
 
 section .text
@@ -60,6 +65,11 @@ _start:
     or eax, 3
     mov [boot_p4 + 511*8], eax
 
+    ; NEW: P4[256] = P3 direct map (0xFFFF800000000000)
+    mov eax, boot_p3_direct
+    or eax, 3
+    mov [boot_p4 + 256*8], eax
+
     ; P3[0] = P2 identity
     mov eax, boot_p2
     or eax, 3
@@ -70,17 +80,43 @@ _start:
     or eax, 3
     mov [boot_p3_high + 510*8], eax
 
-    ; Map first 4MB identity with 2MB pages
-    mov eax, 0x83  ; 0MB, present+write+huge
-    mov [boot_p2], eax
-    mov eax, 0x200083  ; 2MB
-    mov [boot_p2 + 8], eax
+    ; NEW: P3_direct[0] = P2 direct map
+    mov eax, boot_p2_direct
+    or eax, 3
+    mov [boot_p3_direct], eax
 
-    ; Map first 4MB to higher half with 2MB pages
-    mov eax, 0x83
-    mov [boot_p2_high], eax
-    mov eax, 0x200083
-    mov [boot_p2_high + 8], eax
+    ; Map first 128MB identity with 2MB pages (64 pages)
+    mov ecx, 0
+.map_p2_low:
+    mov eax, 0x200000
+    mul ecx
+    or eax, 0x83
+    mov [boot_p2 + ecx*8], eax
+    inc ecx
+    cmp ecx, 64
+    jl .map_p2_low
+
+    ; Map 0-128MB to higher half with 2MB pages (64 pages)
+    mov ecx, 0
+.map_p2_high:
+    mov eax, 0x200000
+    mul ecx
+    or eax, 0x83
+    mov [boot_p2_high + ecx*8], eax
+    inc ecx
+    cmp ecx, 64
+    jl .map_p2_high
+
+    ; NEW: Map 0-128MB to direct map region with 2MB pages (64 pages)
+    mov ecx, 0
+.map_p2_direct:
+    mov eax, 0x200000
+    mul ecx
+    or eax, 0x83
+    mov [boot_p2_direct + ecx*8], eax
+    inc ecx
+    cmp ecx, 64
+    jl .map_p2_direct
 
     ; Load page table
     mov eax, boot_p4
@@ -119,6 +155,5 @@ start64:
     mov gs, ax
 
     ; Now jump to higher-half kernel
-    ; The kernel_entry symbol will be at higher-half address
     extern kernel_entry
     jmp kernel_entry

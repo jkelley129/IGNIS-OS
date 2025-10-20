@@ -13,9 +13,14 @@
 // Current page table root (physical address)
 static uint64_t current_pml4_phys = 0;
 
-//Get pointer to page table(using physical memory map)
+// FIXED: Get pointer to page table with fallback for boot tables
 static inline uint64_t* get_table(uint64_t phys_addr) {
-    return (uint64_t*)PHYS_TO_VIRT(phys_addr);
+    // Check if in direct map region (above 4MB)
+    if (phys_addr >= PHYS_FREE_START) {
+        return (uint64_t*)PHYS_TO_VIRT(phys_addr);
+    }
+    // Fallback for boot tables in low memory (they're identity mapped)
+    return (uint64_t*)phys_addr;
 }
 
 kerr_t vmm_init(void) {

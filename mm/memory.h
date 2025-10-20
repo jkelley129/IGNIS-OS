@@ -25,6 +25,10 @@ void kfree(void* ptr);
 void* kcalloc(size_t num, size_t size);
 void* krealloc(void* ptr, size_t new_size);
 
+// NEW: Page-aligned allocation helpers
+void* kalloc_pages(size_t num_pages);
+void kfree_pages(void* ptr, size_t num_pages);
+
 // Memory utility functions
 void memory_print_stats(void);
 uint64_t memory_get_free(void);

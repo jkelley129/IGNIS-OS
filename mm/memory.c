@@ -1,4 +1,6 @@
 #include "memory.h"
+#include "pmm.h"
+#include "memory_layout.h"
 #include "../console/console.h"
 #include "../libc/string.h"
 #include "error_handling/errno.h"
@@ -166,6 +168,19 @@ void* krealloc(void* ptr, size_t new_size) {
 
     kfree(ptr);
     return new_ptr;
+}
+
+// NEW: Page-aligned allocation helpers
+void* kalloc_pages(size_t num_pages) {
+    uint64_t phys = pmm_alloc_pages(num_pages);
+    if (!phys) return NULL;
+    return PHYS_TO_VIRT(phys);
+}
+
+void kfree_pages(void* ptr, size_t num_pages) {
+    if (!ptr) return;
+    uint64_t phys = VIRT_TO_PHYS((uint64_t)ptr);
+    pmm_free_pages(phys, num_pages);
 }
 
 uint64_t memory_get_free(void) {
