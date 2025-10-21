@@ -108,7 +108,7 @@ void kernel_main() {
     driver_list();
 
     //Enable interrupts
-    asm volatile("sti");
+    idt_enable_interrupts();
 
     keyboard_set_callback(shell_handle_char);
     shell_init();

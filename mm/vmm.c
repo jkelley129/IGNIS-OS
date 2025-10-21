@@ -3,6 +3,7 @@
 #include "../console/console.h"
 #include "../io/serial.h"
 #include "../libc/string.h"
+#include "interrupts/idt.h"
 
 // Page table entry indices from virtual address
 #define PML4_INDEX(addr) (((addr) >> 39) & 0x1FF)
@@ -249,7 +250,7 @@ void page_fault_handler(uint64_t fault_addr, uint64_t error_code) {
     console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
 
     // Halt the system
-    asm volatile("cli");
+    idt_disable_interrupts();
     while(1) {
         asm volatile("hlt");
     }

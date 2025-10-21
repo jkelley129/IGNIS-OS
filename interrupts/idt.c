@@ -97,3 +97,11 @@ static kerr_t idt_driver_init(driver_t* drv) {
 kerr_t idt_register() {
     return driver_register(&idt_driver);
 }
+
+void idt_disable_interrupts(void) {
+    asm volatile("cli");
+}
+
+void idt_enable_interrupts(void) {
+    asm volatile("sti");
+}
