@@ -43,15 +43,12 @@ Features in rough chronological order of implementation
   - ATA
 - Error handling with enums(`kerr_t`) and helper functions/macros
 - Generic driver registration system with features like priority and dependencies
+- Serial driver for external logging
 - Page-aligned memory allocator
+- Kernel Panic
+
 ## TODO
 - *(TEST)* Disk drivers for persistent storage(on branch [disk_testing](https://github.com/jkelley129/IGNIS-OS/tree/disk_testing)) **[ ON HOLD ]**
-- Update architecture + add nice to haves
-  - Add serial output **[ DONE ]**
-  - Add memory layout header **[ DONE ]**
-  - Add PMM/VMM **[ DONE ]**
-  - Add kernel panic
-  - Polish(macros + nice to haves) **[ DONE ]**
 - More sophisticated memory allocator(buddy allocator, slab allocator) 
 - Implementation of an on-disk filesystem(ext4)
 - More device drivers for more devices
