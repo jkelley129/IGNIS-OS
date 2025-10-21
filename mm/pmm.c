@@ -78,6 +78,8 @@ kerr_t pmm_init(void) {
     uitoa(pmm_get_free_memory() / 1024 / 1024, num_str);
     serial_debug_puts(num_str);
     serial_debug_puts(" MB\n");
+
+    return E_OK;
 }
 
 uint64_t pmm_alloc_page(void) {
