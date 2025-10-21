@@ -294,15 +294,16 @@ uint8_t driver_get_count(void) {
 // Helper function to get driver type name
 const char* driver_type_name(driver_type_t type) {
     switch (type) {
-        case DRIVER_TYPE_BLOCK:      return "Block";
-        case DRIVER_TYPE_CHAR:       return "Character";
-        case DRIVER_TYPE_NETWORK:    return "Network";
-        case DRIVER_TYPE_INPUT:      return "Input";
-        case DRIVER_TYPE_TIMER:      return "Timer";
-        case DRIVER_TYPE_FILESYSTEM: return "Filesystem";
-        case DRIVER_TYPE_VIDEO:      return "Video";
-        case DRIVER_TYPE_AUDIO:      return "Audio";
-        default:                     return "Unknown";
+        case DRIVER_TYPE_FUNDAMENTAL: return "Fundamental";
+        case DRIVER_TYPE_BLOCK:       return "Block";
+        case DRIVER_TYPE_CHAR:        return "Character";
+        case DRIVER_TYPE_NETWORK:     return "Network";
+        case DRIVER_TYPE_INPUT:       return "Input";
+        case DRIVER_TYPE_TIMER:       return "Timer";
+        case DRIVER_TYPE_FILESYSTEM:  return "Filesystem";
+        case DRIVER_TYPE_VIDEO:       return "Video";
+        case DRIVER_TYPE_AUDIO:       return "Audio";
+        default:                      return "Unknown";
     }
 }
 

@@ -22,7 +22,7 @@ static kerr_t idt_driver_init(driver_t* drv);
 // Driver structure for IDT
 static driver_t idt_driver = {
     .name = "IDT",
-    .type = DRIVER_TYPE_UNKNOWN,  // IDT is fundamental, not a typical driver type
+    .type = DRIVER_TYPE_FUNDAMENTAL,
     .version = 1,
     .priority = 10,  // High priority - needed by many other drivers
     .init = idt_driver_init,

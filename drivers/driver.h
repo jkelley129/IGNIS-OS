@@ -10,6 +10,7 @@
 // Driver types
 typedef enum {
     DRIVER_TYPE_UNKNOWN = 0,
+    DRIVER_TYPE_FUNDAMENTAL,
     DRIVER_TYPE_BLOCK,      // Block device drivers (ATA, NVME, etc.)
     DRIVER_TYPE_CHAR,       // Character device drivers
     DRIVER_TYPE_NETWORK,    // Network drivers
