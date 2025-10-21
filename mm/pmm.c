@@ -97,9 +97,15 @@ uint64_t pmm_alloc_page(void) {
 }
 
 void pmm_free_page(uint64_t phys_addr) {
-    if (phys_addr < PHYS_LOW_MEM_START || phys_addr >= PHYS_HEAP_END) return;
+    if (phys_addr < PHYS_LOW_MEM_START || phys_addr >= PHYS_HEAP_END) {
+        serial_debug_puts("[PMM] E_INVALID free_page() call! Memory out of range");
+        return;
+    }
 
-    if (!IS_PAGE_ALIGNED(phys_addr)) return;
+    if (!IS_PAGE_ALIGNED(phys_addr)) {
+        serial_debug_puts("[PMM] E_INVALID free_page() call! Must be page aligned");
+        return;
+    }
 
     uint32_t page = addr_to_page(phys_addr);
     if (page >= total_pages) return;
@@ -153,8 +159,11 @@ void pmm_mark_region_used(uint64_t start, uint64_t end) {
 
     //Only mark pages in region
     if (start < PHYS_FREE_START) start = PHYS_FREE_START;
-    if (end > PHYS_MEMORY_END) start = PHYS_MEMORY_END;
-    if (start >= end) return;
+    if (end > PHYS_MEMORY_END) end = PHYS_MEMORY_END;
+    if (start >= end) {
+        serial_debug_puts("[PMM] E_INVALID start cannot be greater than end");
+        return;
+    }
 
     uint32_t start_page = addr_to_page(start);
     uint32_t end_page = addr_to_page(end);
@@ -171,8 +180,11 @@ void pmm_mark_region_free(uint64_t start, uint64_t end) {
     start = PAGE_ALIGN_DOWN(start);
     end = PAGE_ALIGN_UP(end);
     if (start < PHYS_FREE_START) start = PHYS_FREE_START;
-    if (end > PHYS_MEMORY_END) start = PHYS_MEMORY_END;
-    if (start >= end) return;
+    if (end > PHYS_MEMORY_END) end = PHYS_MEMORY_END;
+    if (start >= end) {
+        serial_debug_puts("[PMM] E_INVALID start cannot be greater than end");
+        return;
+    }
 
     uint32_t start_page = addr_to_page(start);
     uint32_t end_page = addr_to_page(end);
