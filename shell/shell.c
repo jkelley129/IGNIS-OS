@@ -9,6 +9,7 @@
 #include "../mm/memory.h"
 #include "../fs/vfs.h"
 #include "../error_handling/errno.h"
+#include "../error_handling/kernel_panic.h"
 #include "mm/pmm.h"
 
 #define CMD_BUFFER_SIZE 256
@@ -42,6 +43,8 @@ static const shell_command_t commands[] = {
         {"blkwrite", "Write to block device", cmd_blkwrite},
         {"blktest", "Test block device I/O", cmd_blktest},
         {"hexdump", "Display file in hexadecimal", cmd_hexdump},
+        {"panic", "Test kernel panic (WARNING: will halt system)", cmd_panic},
+        {"panictest", "Test panic with assertion", cmd_panictest},
         {0, 0, 0} // Sentinel
 };
 
@@ -872,6 +875,60 @@ void cmd_hexdump(int argc, char** argv) {
 
     kfree(buffer);
     vfs_close(file);
+}
+
+
+void cmd_panic(int argc, char** argv) {
+    if (argc < 2) {
+        console_puts("\n");
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_LIGHT_RED, CONSOLE_COLOR_BLACK});
+        console_puts("WARNING: This will trigger a kernel panic!\n");
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
+        console_puts("Usage: panic <message>\n");
+        console_puts("Example: panic \"Testing panic handler\"\n\n");
+        return;
+    }
+
+    // Concatenate all arguments as message
+    char message[256];
+    size_t pos = 0;
+    for (int i = 1; i < argc && pos < 255; i++) {
+        size_t len = strlen(argv[i]);
+        for (size_t j = 0; j < len && pos < 255; j++) {
+            message[pos++] = argv[i][j];
+        }
+        if (i < argc - 1 && pos < 255) {
+            message[pos++] = ' ';
+        }
+    }
+    message[pos] = '\0';
+
+    // Trigger panic with context
+    PANIC(message);
+}
+
+void cmd_panictest(int argc, char** argv) {
+    console_puts("\n=== Kernel Panic Test ===\n");
+    console_puts("Testing various panic scenarios...\n\n");
+
+    console_puts("1. Testing NULL pointer assertion...\n");
+    void* test_ptr = kmalloc(64);
+    KASSERT(test_ptr != 0, "Memory allocation failed");
+    console_set_color((console_color_attr_t){CONSOLE_COLOR_GREEN, CONSOLE_COLOR_BLACK});
+    console_puts("   ✓ Passed\n");
+    console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
+    kfree(test_ptr);
+
+    console_puts("\n2. Testing PANIC_ON_NULL macro...\n");
+    test_ptr = kmalloc(128);
+    PANIC_ON_NULL(test_ptr, "Test allocation failed");
+    console_set_color((console_color_attr_t){CONSOLE_COLOR_GREEN, CONSOLE_COLOR_BLACK});
+    console_puts("   ✓ Passed\n");
+    console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
+    kfree(test_ptr);
+
+    console_puts("\n3. All panic tests passed!\n");
+    console_puts("   To trigger an actual panic, use: panic <message>\n\n");
 }
 
 // ============================================================================

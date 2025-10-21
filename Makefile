@@ -38,7 +38,8 @@ OBJS = $(BUILD_DIR)/boot.o \
        $(BUILD_DIR)/block.o \
        $(BUILD_DIR)/ata.o \
        $(BUILD_DIR)/nvme.o \
-       $(BUILD_DIR)/errno.o
+       $(BUILD_DIR)/errno.o \
+       $(BUILD_DIR)/kernel_panic.o
 
 # Default target
 all: $(OUTPUT_DIR)/ignis.iso
@@ -94,6 +95,9 @@ $(BUILD_DIR)/nvme.o: drivers/disks/nvme.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/errno.o: error_handling/errno.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/kernel_panic.o: error_handling/kernel_panic.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/shell.o: shell/shell.c | $(BUILD_DIR)
