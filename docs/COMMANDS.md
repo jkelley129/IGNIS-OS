@@ -14,12 +14,16 @@
 | `panictest` | `lsdrv`       | Tests kernel panic macros      |
 
 ## Memory Commands
-| Command    | Usage      | Description                 |
-|------------|------------|-----------------------------|
-| `meminfo`  | `meminfo`  | Show memory statistics      |
-| `memtest`  | `memtest`  | Run memory allocator test   |
-| `pmminfo`  | `pmminfo`  | Show PMM stats              |
-| `pagetest` | `pagetest` | Test page memory allocation |
+| Command     | Usage       | Description                   |
+|-------------|-------------|-------------------------------|
+| `meminfo`   | `meminfo`   | Show memory statistics        |
+| `memtest`   | `memtest`   | Run memory allocator test     |
+| `pmminfo`   | `pmminfo`   | Show PMM stats                |
+| `pagetest`  | `pagetest`  | Test page memory allocation   |
+| `buddyinfo` | `buddyinfo` | Display buddy allocator info  |
+| `buddytest` | `buddytest` | Test buddy allocator          |
+| `slabinfo`  | `slabinfo`  | Display slab allocator info   |
+| `slabtest`  | `slabtest`  | Test slab allocator           |
 
 ## File System Commands
 | Command | Usage | Description |

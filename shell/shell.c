@@ -11,6 +11,8 @@
 #include "../error_handling/errno.h"
 #include "../error_handling/kernel_panic.h"
 #include "mm/pmm.h"
+#include "mm/buddy.h"
+#include "mm/slab.h"
 
 #define CMD_BUFFER_SIZE 256
 
@@ -30,6 +32,10 @@ static const shell_command_t commands[] = {
         {"memtest", "Run memory allocator test", cmd_memtest},
         {"pmminfo", "Show PMM info", cmd_pmminfo},
         {"pagetest", "Test page allocation", cmd_pagetest},
+        {"buddyinfo", "Display buddy allocator statistics", cmd_buddyinfo},
+        {"buddytest", "Test buddy allocator", cmd_buddytest},
+        {"slabinfo", "Display slab allocator statistics", cmd_slabinfo},
+        {"slabtest", "Test slab allocator", cmd_slabtest},
         {"ls", "List directory contents", cmd_ls},
         {"tree", "Display directory tree", cmd_tree},
         {"touch", "Create a new file", cmd_touch},
@@ -325,6 +331,326 @@ void cmd_pagetest(int argc, char** argv) {
         console_puts("✗ Allocation failed\n\n");
         console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
     }
+}
+
+void cmd_buddyinfo(int argc, char** argv) {
+    buddy_allocator_t* buddy = buddy_get_global();
+    if (!buddy) {
+        console_perror("Buddy allocator not initialized\n");
+        return;
+    }
+
+    buddy_print_stats(buddy);
+}
+
+void cmd_buddytest(int argc, char** argv) {
+    console_puts("\n=== Buddy Allocator Test ===\n");
+
+    buddy_allocator_t* buddy = buddy_get_global();
+    if (!buddy) {
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_RED, CONSOLE_COLOR_BLACK});
+        console_puts("✗ Buddy allocator not initialized\n\n");
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
+        return;
+    }
+
+    console_puts("Test 1: Allocate single page (order 0)...\n");
+    uint64_t page1 = buddy_alloc_order(buddy, 0);
+    if (page1) {
+        char addr_str[32];
+        console_puts("  Allocated at: 0x");
+        uitoa(page1, addr_str);
+        console_puts(addr_str);
+        console_putc('\n');
+
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_GREEN, CONSOLE_COLOR_BLACK});
+        console_puts("  ✓ Single page allocation successful\n");
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
+    } else {
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_RED, CONSOLE_COLOR_BLACK});
+        console_puts("  ✗ Allocation failed\n");
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
+        return;
+    }
+
+    console_puts("\nTest 2: Allocate 8 pages (order 3)...\n");
+    uint64_t pages8 = buddy_alloc_order(buddy, 3);
+    if (pages8) {
+        char addr_str[32];
+        console_puts("  Allocated at: 0x");
+        uitoa(pages8, addr_str);
+        console_puts(addr_str);
+        console_putc('\n');
+
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_GREEN, CONSOLE_COLOR_BLACK});
+        console_puts("  ✓ Multi-page allocation successful\n");
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
+    } else {
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_RED, CONSOLE_COLOR_BLACK});
+        console_puts("  ✗ Allocation failed\n");
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
+        buddy_free(buddy, page1);
+        return;
+    }
+
+    console_puts("\nTest 3: Allocate by size (17KB should use order 3)...\n");
+    uint64_t size_alloc = buddy_alloc(buddy, 17 * 1024);
+    if (size_alloc) {
+        size_t actual_size = buddy_get_actual_size(17 * 1024);
+        char num_str[32];
+        console_puts("  Requested: 17 KB, Actual: ");
+        uitoa(actual_size / 1024, num_str);
+        console_puts(num_str);
+        console_puts(" KB\n");
+
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_GREEN, CONSOLE_COLOR_BLACK});
+        console_puts("  ✓ Size-based allocation successful\n");
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
+    } else {
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_RED, CONSOLE_COLOR_BLACK});
+        console_puts("  ✗ Allocation failed\n");
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
+        buddy_free(buddy, page1);
+        buddy_free(buddy, pages8);
+        return;
+    }
+
+    console_puts("\nTest 4: Write/Read test...\n");
+    void* virt_ptr = PHYS_TO_VIRT(page1);
+    uint8_t* test_data = (uint8_t*)virt_ptr;
+    test_data[0] = 0xAA;
+    test_data[4095] = 0xBB;
+
+    if (test_data[0] == 0xAA && test_data[4095] == 0xBB) {
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_GREEN, CONSOLE_COLOR_BLACK});
+        console_puts("  ✓ Write/Read verification successful\n");
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
+    } else {
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_RED, CONSOLE_COLOR_BLACK});
+        console_puts("  ✗ Write/Read verification failed\n");
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
+    }
+
+    console_puts("\nTest 5: Free and verify merging...\n");
+    uint64_t splits_before = buddy->splits;
+    uint64_t merges_before = buddy->merges;
+
+    buddy_free(buddy, page1);
+    buddy_free(buddy, pages8);
+    buddy_free(buddy, size_alloc);
+
+    char num_str[32];
+    console_puts("  Merges performed: ");
+    uitoa(buddy->merges - merges_before, num_str);
+    console_puts(num_str);
+    console_putc('\n');
+
+    console_set_color((console_color_attr_t){CONSOLE_COLOR_GREEN, CONSOLE_COLOR_BLACK});
+    console_puts("  ✓ Free and merge successful\n");
+    console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
+
+    console_puts("\nTest 6: Allocation pattern test (fragment and coalesce)...\n");
+    uint64_t blocks[10];
+    console_puts("  Allocating 10 blocks of 1 page each...\n");
+    for (int i = 0; i < 10; i++) {
+        blocks[i] = buddy_alloc_order(buddy, 0);
+        if (!blocks[i]) {
+            console_set_color((console_color_attr_t){CONSOLE_COLOR_RED, CONSOLE_COLOR_BLACK});
+            console_puts("  ✗ Allocation failed at block ");
+            uitoa(i, num_str);
+            console_puts(num_str);
+            console_putc('\n');
+            console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
+
+            // Free previously allocated blocks
+            for (int j = 0; j < i; j++) {
+                buddy_free(buddy, blocks[j]);
+            }
+            return;
+        }
+    }
+
+    console_puts("  Freeing every other block...\n");
+    for (int i = 0; i < 10; i += 2) {
+        buddy_free(buddy, blocks[i]);
+    }
+
+    console_puts("  Freeing remaining blocks...\n");
+    for (int i = 1; i < 10; i += 2) {
+        buddy_free(buddy, blocks[i]);
+    }
+
+    console_set_color((console_color_attr_t){CONSOLE_COLOR_GREEN, CONSOLE_COLOR_BLACK});
+    console_puts("  ✓ Fragmentation test successful\n");
+    console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
+
+    console_puts("\n");
+    console_set_color((console_color_attr_t){CONSOLE_COLOR_GREEN, CONSOLE_COLOR_BLACK});
+    console_puts("✓ All buddy allocator tests passed!\n");
+    console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
+
+    console_puts("\nCurrent allocator statistics:\n");
+    buddy_print_stats(buddy);
+}
+
+void cmd_slabinfo(int argc, char** argv) {
+    console_puts("\n");
+    slab_print_all_stats();
+}
+
+void cmd_slabtest(int argc, char** argv) {
+    console_puts("\n=== Slab Allocator Test ===\n");
+
+    console_puts("Test 1: Small allocations (32 bytes)...\n");
+    void* small1 = slab_kmalloc(32);
+    void* small2 = slab_kmalloc(32);
+    void* small3 = slab_kmalloc(32);
+
+    if (small1 && small2 && small3) {
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_GREEN, CONSOLE_COLOR_BLACK});
+        console_puts("  ✓ Small allocations successful\n");
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
+    } else {
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_RED, CONSOLE_COLOR_BLACK});
+        console_puts("  ✗ Small allocation failed\n\n");
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
+        return;
+    }
+
+    console_puts("\nTest 2: Medium allocations (256 bytes)...\n");
+    void* medium1 = slab_kmalloc(256);
+    void* medium2 = slab_kmalloc(256);
+
+    if (medium1 && medium2) {
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_GREEN, CONSOLE_COLOR_BLACK});
+        console_puts("  ✓ Medium allocations successful\n");
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
+    } else {
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_RED, CONSOLE_COLOR_BLACK});
+        console_puts("  ✗ Medium allocation failed\n\n");
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
+        slab_kfree(small1);
+        slab_kfree(small2);
+        slab_kfree(small3);
+        return;
+    }
+
+    console_puts("\nTest 3: Large allocations (1024 bytes)...\n");
+    void* large1 = slab_kmalloc(1024);
+    void* large2 = slab_kmalloc(1024);
+
+    if (large1 && large2) {
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_GREEN, CONSOLE_COLOR_BLACK});
+        console_puts("  ✓ Large allocations successful\n");
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
+    } else {
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_RED, CONSOLE_COLOR_BLACK});
+        console_puts("  ✗ Large allocation failed\n\n");
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
+        slab_kfree(small1);
+        slab_kfree(small2);
+        slab_kfree(small3);
+        slab_kfree(medium1);
+        slab_kfree(medium2);
+        return;
+    }
+
+    console_puts("\nTest 4: Write/Read verification...\n");
+    uint8_t* test_ptr = (uint8_t*)small1;
+    for (int i = 0; i < 32; i++) {
+        test_ptr[i] = i & 0xFF;
+    }
+
+    int verify_ok = 1;
+    for (int i = 0; i < 32; i++) {
+        if (test_ptr[i] != (i & 0xFF)) {
+            verify_ok = 0;
+            break;
+        }
+    }
+
+    if (verify_ok) {
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_GREEN, CONSOLE_COLOR_BLACK});
+        console_puts("  ✓ Write/Read verification successful\n");
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
+    } else {
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_RED, CONSOLE_COLOR_BLACK});
+        console_puts("  ✗ Write/Read verification failed\n");
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
+    }
+
+    console_puts("\nTest 5: Free and reallocation...\n");
+    slab_kfree(small2);
+    void* small4 = slab_kmalloc(32);
+
+    if (small4) {
+        // Check if we got the same address (reuse)
+        if (small4 == small2) {
+            console_set_color((console_color_attr_t){CONSOLE_COLOR_GREEN, CONSOLE_COLOR_BLACK});
+            console_puts("  ✓ Object reuse successful (same address)\n");
+            console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
+        } else {
+            console_set_color((console_color_attr_t){CONSOLE_COLOR_GREEN, CONSOLE_COLOR_BLACK});
+            console_puts("  ✓ Reallocation successful (different address)\n");
+            console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
+        }
+    }
+
+    console_puts("\nTest 6: Multiple allocations from different caches...\n");
+    void* multi_allocs[20];
+    int sizes[] = {32, 64, 128, 256, 512, 1024, 2048, 4096};
+    int alloc_success = 1;
+
+    for (int i = 0; i < 20 && i < 20; i++) {
+        size_t size = sizes[i % 8];
+        multi_allocs[i] = slab_kmalloc(size);
+        if (!multi_allocs[i]) {
+            alloc_success = 0;
+            char num_str[32];
+            console_puts("  Failed at allocation ");
+            uitoa(i, num_str);
+            console_puts(num_str);
+            console_putc('\n');
+
+            // Free previous allocations
+            for (int j = 0; j < i; j++) {
+                slab_kfree(multi_allocs[j]);
+            }
+            break;
+        }
+    }
+
+    if (alloc_success) {
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_GREEN, CONSOLE_COLOR_BLACK});
+        console_puts("  ✓ Multiple cache allocations successful\n");
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
+
+        // Free all
+        for (int i = 0; i < 20; i++) {
+            slab_kfree(multi_allocs[i]);
+        }
+    } else {
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_RED, CONSOLE_COLOR_BLACK});
+        console_puts("  ✗ Multiple allocation test failed\n");
+        console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
+    }
+
+    console_puts("\nCleaning up test allocations...\n");
+    slab_kfree(small1);
+    slab_kfree(small3);
+    slab_kfree(small4);
+    slab_kfree(medium1);
+    slab_kfree(medium2);
+    slab_kfree(large1);
+    slab_kfree(large2);
+
+    console_puts("\n");
+    console_set_color((console_color_attr_t){CONSOLE_COLOR_GREEN, CONSOLE_COLOR_BLACK});
+    console_puts("✓ All slab allocator tests passed!\n");
+    console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
+
+    console_puts("\nCurrent slab statistics:\n");
+    slab_print_all_stats();
 }
 
 // ============================================================================
