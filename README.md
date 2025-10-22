@@ -46,11 +46,14 @@ Features in rough chronological order of implementation
 - Serial driver for external logging
 - Page-aligned memory allocator
 - Kernel Panic
+- Sophisticated memory allocators
+  - Buddy allocator
+  - Slab allocator
+  - Unified allocator interface([mm/allocators/kmalloc.c](https://github.com/jkelley129/tree/main/mm/allocators/kmalloc.c))
 
 ## TODO
 - *(TEST)* Disk drivers for persistent storage(on branch [disk_testing](https://github.com/jkelley129/IGNIS-OS/tree/disk_testing)) **[ ON HOLD ]**
-- More sophisticated memory allocator(buddy allocator, slab allocator) 
-- Implementation of an on-disk filesystem(ext4)
+- Implementation of an on-disk filesystem
 - More device drivers for more devices
 - User space with limited permissions
 - Support for executing user programs
