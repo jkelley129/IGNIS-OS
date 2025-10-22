@@ -352,7 +352,7 @@ clean-disks:
 
 # Clean everything including backups
 clean-all: clean clean-disks
-	rm -f *.backup
+	rm -f *.backup *.log
 
 # ============================================================================
 # HELP TARGET
