@@ -1,7 +1,7 @@
 #include "buddy.h"
-#include "../console/console.h"
-#include "../io/serial.h"
-#include "../libc/string.h"
+#include "../../console/console.h"
+#include "../../io/serial.h"
+#include "../../libc/string.h"
 
 //Global buddy allocator instance
 static buddy_allocator_t* g_buddy_allocator = NULL;

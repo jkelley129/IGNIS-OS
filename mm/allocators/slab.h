@@ -1,9 +1,9 @@
 #ifndef SLAB_H
 #define SLAB_H
 
-#include "../libc/stdint.h"
-#include "../libc/stddef.h"
-#include "../error_handling/errno.h"
+#include "../../libc/stdint.h"
+#include "../../libc/stddef.h"
+#include "../../error_handling/errno.h"
 
 /*
  * Slab Allocator

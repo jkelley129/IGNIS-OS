@@ -1,10 +1,10 @@
 #ifndef BUDDY_H
 #define BUDDY_H
 
-#include "../libc/stdint.h"
-#include "../libc/stddef.h"
-#include "../error_handling/errno.h"
-#include "memory_layout.h"
+#include "../../libc/stdint.h"
+#include "../../libc/stddef.h"
+#include "../../error_handling/errno.h"
+#include "../memory_layout.h"
 
 // Maximum order (2^11 pages = 8MB blocks)
 #define BUDDY_MAX_ORDER 11

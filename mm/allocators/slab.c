@@ -1,9 +1,9 @@
 #include "slab.h"
 #include "buddy.h"
-#include "memory_layout.h"
-#include "../console/console.h"
-#include "../io/serial.h"
-#include "../libc/string.h"
+#include "../memory_layout.h"
+#include "../../console/console.h"
+#include "../../io/serial.h"
+#include "../../libc/string.h"
 
 // Registry of all caches
 static slab_cache_t* cache_registry[SLAB_MAX_CACHES];
