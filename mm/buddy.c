@@ -148,7 +148,7 @@ static void try_merge(buddy_allocator_t* alloc, uint64_t addr, uint8_t order) {
 
 kerr_t buddy_init(buddy_allocator_t* allocator, uint64_t base_addr, uint64_t size) {
     if (!allocator || !IS_PAGE_ALIGNED(base_addr) || !IS_PAGE_ALIGNED(size)) {
-        return E_INVALID;
+        return E_NOMEM;
     }
 
     // Size must be power of 2
