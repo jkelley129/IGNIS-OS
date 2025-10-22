@@ -7,18 +7,18 @@
 static buddy_allocator_t* g_buddy_allocator = NULL;
 
 //Helper: get index from block address
-static inline uint64_t addr_to_index(buddy_allocator_t* alloc, uint64_t addr) {
+static inline uint64_t addr_to_block_index(buddy_allocator_t* alloc, uint64_t addr) {
     return (addr - alloc->base_addr) / PAGE_SIZE;
 }
 
 //Helper: get address from block index
 static inline uint64_t index_to_addr(buddy_allocator_t* alloc, uint64_t index) {
-    return alloc->base_addr (index * PAGE_SIZE);
+    return alloc->base_addr + (index * PAGE_SIZE);
 }
 
 //Helper: calculate buddy address
 static inline uint64_t get_buddy_addr(buddy_allocator_t* alloc, const uint64_t addr, const uint8_t order) {
-    uint64_t block_index = addr_to_index(alloc, addr);
+    uint64_t block_index = addr_to_block_index(alloc, addr);
     uint64_t buddy_index = block_index ^ BUDDY_PAGES_PER_ORDER(order);
     return index_to_addr(alloc, buddy_index);
 }
@@ -38,7 +38,7 @@ static inline int bitmap_test(uint8_t* bitmap, uint64_t bit) {
     return bitmap[bit / 8] & (1 << (bit % 8));
 }
 
-static void remove_from_tree_list(buddy_allocator_t* alloc, buddy_block_t* block, uint8_t order) {
+static void remove_from_free_list(buddy_allocator_t* alloc, buddy_block_t* block, uint8_t order) {
     if (block->prev) block->prev->next = block->next;
     else alloc->free_lists[order] = block->next;
 

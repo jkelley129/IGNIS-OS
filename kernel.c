@@ -7,6 +7,8 @@
 #include "drivers/disks/ata.h"
 #include "shell/shell.h"
 #include "mm/memory.h"
+#include "mm/buddy.h"
+#include "mm/slab.h"
 #include "mm/memory_layout.h"
 #include "fs/vfs.h"
 #include "error_handling/errno.h"
@@ -58,6 +60,10 @@ void kernel_main() {
     TRY_INIT("IDT", idt_register(), err_count)
 
     TRY_INIT("Memory", memory_init(PHYS_HEAP_START, PHYS_HEAP_SIZE),err_count)
+
+    buddy_allocator_t* buddy = kalloc_pages(1);
+    buddy_init(buddy, 0x04000000, 0x04000000);  // 64MB
+    slab_init();
 
     TRY_INIT("PMM", pmm_init(), err_count)
     TRY_INIT("VMM", vmm_init(), err_count)
