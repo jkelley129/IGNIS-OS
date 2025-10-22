@@ -292,14 +292,14 @@ Added section on installing dependencies for Ubuntu 22.04.
    make run
 ```
 
-2. **Check for warnings**
+1. **Check for warnings**
 ```bash
    make 2>&1 | grep warning
 ```
 
-3. **Update documentation** if needed
+1. **Update documentation** if needed
 
-4. **Add tests** if applicable
+2. **Add tests** if applicable
 
 ### PR Checklist
 
