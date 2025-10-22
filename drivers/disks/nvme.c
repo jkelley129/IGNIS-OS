@@ -1,10 +1,11 @@
 #include "nvme.h"
-#include "../block.h"
-#include "../../console/console.h"
-#include "../../io/ports.h"
-#include "../../libc/string.h"
-#include "../../mm/memory.h"
-#include "../../error_handling/errno.h"
+#include "block.h"
+#include "console/console.h"
+#include "io/ports.h"
+#include "libc/string.h"
+#include "mm/memory.h"
+#include "mm/allocators/kmalloc.h"
+#include "error_handling/errno.h"
 
 // PCI Configuration Space
 #define PCI_CONFIG_ADDRESS 0xCF8

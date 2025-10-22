@@ -3,6 +3,7 @@
 #include "libc/string.h"
 #include "error_handling/errno.h"
 #include "mm/memory.h"
+#include "mm/allocators/kmalloc.h"
 #include "driver.h"
 
 // Block manager structure (hidden from other files)

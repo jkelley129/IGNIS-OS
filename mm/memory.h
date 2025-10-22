@@ -17,15 +17,11 @@ typedef struct memory_block {
 // Opaque heap structure
 typedef struct heap heap_t;
 
-// Memory allocator functions
+// Legacy heap functions (INTERNAL USE ONLY - use kmalloc.h instead)
 kerr_t memory_init(uint64_t heap_start, uint64_t heap_size);
-heap_t* memory_get_kernel_heap(void);  // Get the kernel's heap
-void* kmalloc(size_t size);
-void kfree(void* ptr);
-void* kcalloc(size_t num, size_t size);
-void* krealloc(void* ptr, size_t new_size);
+heap_t* memory_get_kernel_heap(void);
 
-// NEW: Page-aligned allocation helpers
+// DEPRECATED: Use kalloc_pages() from kmalloc.h instead
 void* kalloc_pages(size_t num_pages);
 void kfree_pages(void* ptr, size_t num_pages);
 

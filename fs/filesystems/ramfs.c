@@ -1,6 +1,7 @@
 #include "ramfs.h"
-#include "../../mm/memory.h"
-#include "../../libc/string.h"
+#include "mm/memory.h"
+#include "mm/allocators/kmalloc.h"
+#include "libc/string.h"
 
 // Forward declarations of operations
 static kerr_t ramfs_open(vfs_node_t* node);

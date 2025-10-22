@@ -2,17 +2,18 @@
 
 #include "driver.h"
 #include "serial.h"
-#include "../console/console.h"
-#include "../libc/string.h"
-#include "../drivers/pit.h"
-#include "../drivers/block.h"
-#include "../mm/memory.h"
-#include "../fs/vfs.h"
-#include "../error_handling/errno.h"
-#include "../error_handling/kernel_panic.h"
+#include "console/console.h"
+#include "libc/string.h"
+#include "drivers/pit.h"
+#include "drivers/block.h"
+#include "mm/memory.h"
+#include "fs/vfs.h"
+#include "error_handling/errno.h"
+#include "error_handling/kernel_panic.h"
 #include "mm/pmm.h"
-#include "mm/buddy.h"
-#include "mm/slab.h"
+#include "mm/allocators/buddy.h"
+#include "mm/allocators/slab.h"
+#include "mm/allocators/kmalloc.h"
 
 #define CMD_BUFFER_SIZE 256
 

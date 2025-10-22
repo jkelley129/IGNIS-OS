@@ -33,6 +33,7 @@ OBJS = $(BUILD_DIR)/boot.o \
        $(BUILD_DIR)/memory.o \
        $(BUILD_DIR)/buddy.o \
        $(BUILD_DIR)/slab.o \
+       $(BUILD_DIR)/kmalloc.o \
        $(BUILD_DIR)/pmm.o \
        $(BUILD_DIR)/vmm.o \
        $(BUILD_DIR)/vfs.o \
@@ -108,10 +109,13 @@ $(BUILD_DIR)/shell.o: shell/shell.c | $(BUILD_DIR)
 $(BUILD_DIR)/memory.o: mm/memory.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD_DIR)/buddy.o: mm/buddy.c | $(BUILD_DIR)
+$(BUILD_DIR)/buddy.o: mm/allocators/buddy.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD_DIR)/slab.o: mm/slab.c | $(BUILD_DIR)
+$(BUILD_DIR)/slab.o: mm/allocators/slab.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/kmalloc.o: mm/allocators/kmalloc.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/pmm.o: mm/pmm.c | $(BUILD_DIR)
