@@ -1,4 +1,5 @@
 #include "errno.h"
+#include "serial.h"
 #include "console/console.h"
 
 const char* k_strerror(kerr_t err){
@@ -21,5 +22,9 @@ void k_pkerr(kerr_t err) {
         (console_color_attr_t) {CONSOLE_COLOR_RED, CONSOLE_COLOR_BLACK});
     console_puts(k_strerror(err));
     console_putc('\n');
+
+    serial_debug_puts("[FAILED]: ");
+    serial_debug_puts(k_strerror(err));
+    serial_debug_putc('\n');
 }
 
