@@ -24,23 +24,21 @@ typedef struct buddy_block {
     struct buddy_block* prev;
 } buddy_block_t;
 
-// Buddy allocator state
+// Buddy allocator struct
 typedef struct {
-    uint64_t base_addr;          // Base physical address of managed region
-    uint64_t total_size;         // Total size in bytes
-    uint64_t total_pages;        // Total number of pages
-    
-    // Free lists for each order
+    uint64_t base_addr;
+    uint64_t total_size;
+    uint64_t total_pages;
+
     buddy_block_t* free_lists[BUDDY_MAX_ORDER + 1];
-    
-    // Statistics
+
     uint64_t allocations[BUDDY_MAX_ORDER + 1];
     uint64_t deallocations[BUDDY_MAX_ORDER + 1];
     uint64_t splits;
     uint64_t merges;
-    
-    // Bitmap to track allocated blocks
+
     uint8_t* allocation_bitmap;
+    uint8_t* order_bitmap;  // NEW: Store order for each allocation
 } buddy_allocator_t;
 
 // Initialize buddy allocator

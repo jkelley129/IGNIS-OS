@@ -170,18 +170,20 @@ kerr_t buddy_init(buddy_allocator_t* allocator, uint64_t base_addr, uint64_t siz
     allocator->splits = 0;
     allocator->merges = 0;
 
-    // Calculate bitmap size (1 bit per page)
-    size_t bitmap_size = (allocator->total_pages + 7) / 8;
+    // Calculate bitmap sizes
+    size_t alloc_bitmap_size = (allocator->total_pages + 7) / 8;  // 1 bit per page
+    size_t order_bitmap_size = allocator->total_pages;             // 1 byte per page
 
-    // Allocate bitmap at start of managed region
+    // Allocate both bitmaps at start of managed region
     allocator->allocation_bitmap = (uint8_t*)PHYS_TO_VIRT(base_addr);
-    memset(allocator->allocation_bitmap, 0, bitmap_size);
+    allocator->order_bitmap = allocator->allocation_bitmap + alloc_bitmap_size;
+
+    memset(allocator->allocation_bitmap, 0, alloc_bitmap_size);
+    memset(allocator->order_bitmap, 0, order_bitmap_size);
 
     // Mark bitmap pages as used
-    size_t bitmap_pages = (bitmap_size + PAGE_SIZE - 1) / PAGE_SIZE;
-    for (size_t i = 0; i < bitmap_pages; i++) {
-        bitmap_set(allocator->allocation_bitmap, i);
-    }
+    size_t total_bitmap_size = alloc_bitmap_size + order_bitmap_size;
+    size_t bitmap_pages = (total_bitmap_size + PAGE_SIZE - 1) / PAGE_SIZE;
 
     // Add remaining memory to largest possible orders
     uint64_t current_addr = base_addr + (bitmap_pages * PAGE_SIZE);
@@ -255,11 +257,12 @@ uint64_t buddy_alloc_order(buddy_allocator_t* allocator, uint8_t order) {
 
     remove_from_free_list(allocator, block, order);
 
-    // Mark pages as allocated
+    // Mark pages as allocated and store order
     uint64_t block_index = addr_to_block_index(allocator, addr);
     size_t num_pages = BUDDY_PAGES_PER_ORDER(order);
     for (size_t i = 0; i < num_pages; i++) {
         bitmap_set(allocator->allocation_bitmap, block_index + i);
+        allocator->order_bitmap[block_index + i] = order;  // Store order
     }
 
     allocator->allocations[order]++;
@@ -276,7 +279,7 @@ void buddy_free(buddy_allocator_t* allocator, uint64_t phys_addr) {
     if (!allocator || phys_addr < allocator->base_addr ||
         phys_addr >= allocator->base_addr + allocator->total_size) {
         return;
-    }
+        }
 
     if (!IS_PAGE_ALIGNED(phys_addr)) {
         serial_debug_puts("[BUDDY] Warning: Freeing non-aligned address\n");
@@ -287,36 +290,20 @@ void buddy_free(buddy_allocator_t* allocator, uint64_t phys_addr) {
     uint64_t block_index = addr_to_block_index(allocator, phys_addr);
 
     if (!bitmap_test(allocator->allocation_bitmap, block_index)) {
-        serial_debug_puts("[BUDDY] Warning: Double free detected\n");
+        serial_debug_puts("[BUDDY] Warning: Double free detected at 0x");
+        serial_puthex(COM1, phys_addr, 16);
+        serial_debug_puts("\n");
         return;
     }
 
-    // Determine order by checking contiguous allocated pages
-    uint8_t order = 0;
-    size_t num_pages = 1;
+    // Get the stored order
+    uint8_t order = allocator->order_bitmap[block_index];
+    size_t num_pages = BUDDY_PAGES_PER_ORDER(order);
 
-    while (order < BUDDY_MAX_ORDER) {
-        size_t pages_for_next_order = BUDDY_PAGES_PER_ORDER(order + 1);
-        int all_allocated = 1;
-
-        for (size_t i = num_pages; i < pages_for_next_order; i++) {
-            if (!bitmap_test(allocator->allocation_bitmap, block_index + i)) {
-                all_allocated = 0;
-                break;
-            }
-        }
-
-        if (!all_allocated) {
-            break;
-        }
-
-        order++;
-        num_pages = pages_for_next_order;
-    }
-
-    // Mark pages as free
+    // Mark pages as free and clear order
     for (size_t i = 0; i < num_pages; i++) {
         bitmap_clear(allocator->allocation_bitmap, block_index + i);
+        allocator->order_bitmap[block_index + i] = 0;
     }
 
     allocator->deallocations[order]++;
