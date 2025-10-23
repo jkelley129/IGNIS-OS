@@ -1,4 +1,5 @@
 #include "driver.h"
+#include "serial.h"
 #include "../console/console.h"
 #include "../libc/string.h"
 
@@ -221,9 +222,9 @@ kerr_t driver_init_all(void) {
     // Report any uninitialized drivers
     for (uint8_t i = 0; i < driver_count; i++) {
         if (driver_registry[i]->status == DRIVER_STATUS_UNINITIALIZED) {
-            console_puts_color("  Warning: ", CONSOLE_COLOR_WARNING);
-            console_puts(driver_registry[i]->name);
-            console_puts(" failed to initialize (dependency issue?)\n");
+            serial_debug_puts("  Warning: ");
+            serial_debug_puts(driver_registry[i]->name);
+            serial_debug_puts(" failed to initialize (dependency issue?)\n");
         }
     }
 
