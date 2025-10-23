@@ -1,5 +1,6 @@
 #include "nvme.h"
 #include "block.h"
+#include "driver.h"
 #include "console/console.h"
 #include "io/ports.h"
 #include "libc/string.h"
@@ -26,6 +27,17 @@
 
 static nvme_controller_t nvme_ctrl;
 static block_device_t nvme_block_devices[NVME_MAX_NAMESPACES];
+
+static driver_t nvme_driver = {
+    .name = "NVMe",
+    .type = DRIVER_TYPE_BLOCK,
+    .version = 1,
+    .priority = 40,  // Initialize after block layer (priority 30)
+    .init = nvme_init,
+    .cleanup = NULL,
+    .depends_on = "Block Layer",  // Depends on block device layer
+    .driver_data = NULL
+};
 
 //Helper function to read NVMe register
 static inline uint32_t nvme_read32(nvme_controller_t* ctrl, uint32_t offset){
@@ -413,5 +425,10 @@ kerr_t nvme_init() {
             }
         }
     }
+    return E_OK;
+}
+
+kerr_t nvme_register() {
+    driver_register(&nvme_driver);
     return E_OK;
 }

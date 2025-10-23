@@ -1,5 +1,6 @@
 #include "driver.h"
 #include "console/console.h"
+#include "disks/nvme.h"
 #include "interrupts/idt.h"
 #include "drivers/keyboard.h"
 #include "drivers/pit.h"
@@ -99,6 +100,8 @@ void kernel_main() {
     TRY_INIT("Block Device Layer",block_register(),err_count)
 
     TRY_INIT("ATA",ata_register(),err_count)
+
+    TRY_INIT("NVMe",nvme_register(), err_count);
 
     if(err_count == 0) console_puts_color("\nReady! System is running.\n", COLOR_SUCCESS);
     else{

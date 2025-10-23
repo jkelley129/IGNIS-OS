@@ -162,4 +162,6 @@ kerr_t nvme_init();
 int nvme_identify_controller(nvme_controller_t* ctrl, nvme_identify_controller_t* id);
 int nvme_identify_namespace(nvme_controller_t* ctrl, uint32_t nsid, nvme_identify_namespace_t* id);
 
+kerr_t nvme_register();
+
 #endif
