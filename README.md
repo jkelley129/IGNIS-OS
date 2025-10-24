@@ -49,7 +49,7 @@ Features in rough chronological order of implementation
 - Sophisticated memory allocators
   - Buddy allocator
   - Slab allocator
-  - Unified allocator interface([mm/allocators/kmalloc.c](https://github.com/jkelley129/tree/main/mm/allocators/kmalloc.c))
+  - Unified allocator interface([mm/allocators/kmalloc.c](https://github.com/jkelley129/IGNIS-OS/blob/main/mm/allocators/kmalloc.c))
 
 ## TODO
 - *(TEST)* Disk drivers for persistent storage(on branch [disk_testing](https://github.com/jkelley129/IGNIS-OS/tree/disk_testing)) **[ ON HOLD ]**
