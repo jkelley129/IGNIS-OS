@@ -719,8 +719,3 @@ Total Lines of Code: ~10,000
 - "The Slab Allocator: An Object-Caching Kernel Memory Allocator" - Jeff Bonwick
 - "Buddy Memory Allocation" - Donald Knuth, TAOCP Vol 1
 - Linux Kernel Memory Management Documentation
-
----
-
-*Last Updated: January 2025*
-*IGNIS OS Version: 0.0.01*
