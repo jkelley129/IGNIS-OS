@@ -62,4 +62,7 @@ Features in rough chronological order of implementation
 - Graphical User Interface(maybe)
 
 ## Contributing
-Because of the nature of this repository, I would ask anyone to refrain from large PRs implementing a lot of new logic. I want to make IGNIS as best as possible, but I want to learn and implement the core features by myself. If you encounter issues, have some small bug fixes, or code you want to contribute, feel free to make an issue or PR. Just know that I might not immediately merge it if I don't fully understand it. Thank you!
+### Issues
+View .github/ISSUE_TEMPLATES/ for detailed issue templates. Issues are always welcome, as long as they fit the template, are reproducable, and fit the scale and theme of the project
+### Pull Requests
+Because of the nature of this repository, I would ask anyone to refrain from large PRs implementing a lot of new logic. I want to make IGNIS as best as possible, but I want to learn and implement the core features by myself. If you have code you want to contribute, feel free to make an issue or PR. Just know that I might not merge it if I don't fully understand it. Thank you for your interest!
