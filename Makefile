@@ -28,8 +28,9 @@ C_SOURCES = $(foreach dir,$(SRC_DIRS),$(wildcard $(dir)/*.c))
 ASM_SOURCES = $(foreach dir,$(SRC_DIRS),$(wildcard $(dir)/*.asm))
 
 # Generate object file names
+# Add 'asm_' prefix to assembly object files to avoid naming collisions
 C_OBJS = $(patsubst %.c,$(BUILD_DIR)/%.o,$(notdir $(C_SOURCES)))
-ASM_OBJS = $(patsubst %.asm,$(BUILD_DIR)/%.o,$(notdir $(ASM_SOURCES)))
+ASM_OBJS = $(patsubst %.asm,$(BUILD_DIR)/asm_%.o,$(notdir $(ASM_SOURCES)))
 
 # All object files
 OBJS = $(C_OBJS) $(ASM_OBJS)
@@ -59,8 +60,8 @@ iso: $(OBJS)
 $(BUILD_DIR)/%.o: %.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# Generic rule for assembling ASM files
-$(BUILD_DIR)/%.o: %.asm | $(BUILD_DIR)
+# Generic rule for assembling ASM files (with asm_ prefix to avoid collisions)
+$(BUILD_DIR)/asm_%.o: %.asm | $(BUILD_DIR)
 	$(NASM) -f elf64 $< -o $@
 
 # Create directories

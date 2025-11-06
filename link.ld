@@ -13,19 +13,19 @@ SECTIONS {
     }
 
     .boot_data ALIGN(16) : AT(ADDR(.boot_data)) {
-        build/boot.o(.data)
-        build/boot.o(.bss)
+        build/asm_boot.o(.data)
+        build/asm_boot.o(.bss)
     }
 
     .boot_text ALIGN(4K) : AT(ADDR(.boot_text)) {
-        build/boot.o(.text)
+        build/asm_boot.o(.text)
     }
 
     /* Kernel in higher half */
     . += KERNEL_VIRT_BASE;
 
     .text ALIGN(4K) : AT(ADDR(.text) - KERNEL_VIRT_BASE) {
-        build/kernel_entry.o(.text)
+        build/asm_kernel_entry.o(.text)
         *(.text)
     }
 
