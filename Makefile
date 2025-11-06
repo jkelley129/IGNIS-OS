@@ -11,127 +11,57 @@ LDFLAGS = -m elf_x86_64 -T link.ld -nostdlib
 # Directories
 BUILD_DIR = build
 OUTPUT_DIR = dist
+SRC_DIRS = . boot interrupts drivers drivers/disks io console shell mm mm/allocators fs fs/filesystems libc error_handling
 
 # Disk images
 ATA_DISK = $(OUTPUT_DIR)/ata_disk.img
 NVME_DISK = $(OUTPUT_DIR)/nvme_disk.img
 
-# Object files
-OBJS = $(BUILD_DIR)/boot.o \
-       $(BUILD_DIR)/kernel_entry.o \
-       $(BUILD_DIR)/kernel.o \
-       $(BUILD_DIR)/driver.o \
-       $(BUILD_DIR)/vga.o \
-       $(BUILD_DIR)/serial.o \
-       $(BUILD_DIR)/console.o \
-       $(BUILD_DIR)/idt.o \
-       $(BUILD_DIR)/keyboard.o \
-       $(BUILD_DIR)/pit.o \
-       $(BUILD_DIR)/idt_asm.o \
-       $(BUILD_DIR)/shell.o \
-       $(BUILD_DIR)/string.o \
-       $(BUILD_DIR)/memory.o \
-       $(BUILD_DIR)/buddy.o \
-       $(BUILD_DIR)/slab.o \
-       $(BUILD_DIR)/kmalloc.o \
-       $(BUILD_DIR)/pmm.o \
-       $(BUILD_DIR)/vmm.o \
-       $(BUILD_DIR)/vfs.o \
-       $(BUILD_DIR)/ramfs.o \
-       $(BUILD_DIR)/block.o \
-       $(BUILD_DIR)/ata.o \
-       $(BUILD_DIR)/nvme.o \
-       $(BUILD_DIR)/errno.o \
-       $(BUILD_DIR)/kernel_panic.o
+# ============================================================================
+# AUTOMATIC SOURCE FILE DISCOVERY
+# ============================================================================
 
-# Default target
+# Find all .c files in source directories
+C_SOURCES = $(foreach dir,$(SRC_DIRS),$(wildcard $(dir)/*.c))
+
+# Find all .asm files in source directories
+ASM_SOURCES = $(foreach dir,$(SRC_DIRS),$(wildcard $(dir)/*.asm))
+
+# Generate object file names
+C_OBJS = $(patsubst %.c,$(BUILD_DIR)/%.o,$(notdir $(C_SOURCES)))
+ASM_OBJS = $(patsubst %.asm,$(BUILD_DIR)/%.o,$(notdir $(ASM_SOURCES)))
+
+# All object files
+OBJS = $(C_OBJS) $(ASM_OBJS)
+
+# Create a list of VPATH directories for make to search
+VPATH = $(SRC_DIRS)
+
+# ============================================================================
+# DEFAULT TARGET
+# ============================================================================
+
 all: $(OUTPUT_DIR)/ignis.iso
+
+# ============================================================================
+# BUILD TARGETS
+# ============================================================================
 
 # Build ISO
 $(OUTPUT_DIR)/ignis.iso: iso | $(OUTPUT_DIR)
 	$(GRUB_CREATE_ISO) -o $@ $^
 
 iso: $(OBJS)
-	$(LD) $(LDFLAGS) -o $@/boot/kernel.elf $^
+	@mkdir -p iso/boot
+	$(LD) $(LDFLAGS) -o iso/boot/kernel.elf $^
 
-# Compilation rules
-$(BUILD_DIR)/kernel.o: kernel.c | $(BUILD_DIR)
+# Generic rule for compiling C files
+$(BUILD_DIR)/%.o: %.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD_DIR)/boot.o: boot/boot.asm | $(BUILD_DIR)
+# Generic rule for assembling ASM files
+$(BUILD_DIR)/%.o: %.asm | $(BUILD_DIR)
 	$(NASM) -f elf64 $< -o $@
-
-$(BUILD_DIR)/idt_asm.o: interrupts/idt.asm | $(BUILD_DIR)
-	$(NASM) -f elf64 $< -o $@
-
-$(BUILD_DIR)/kernel_entry.o: boot/kernel_entry.asm | $(BUILD_DIR)
-	$(NASM) -f elf64 $< -o $@
-
-$(BUILD_DIR)/driver.o: drivers/driver.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-$(BUILD_DIR)/vga.o: io/vga.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-$(BUILD_DIR)/serial.o: io/serial.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-$(BUILD_DIR)/console.o: console/console.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-$(BUILD_DIR)/idt.o: interrupts/idt.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-$(BUILD_DIR)/keyboard.o: drivers/keyboard.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-$(BUILD_DIR)/pit.o: drivers/pit.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-$(BUILD_DIR)/block.o: drivers/block.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-$(BUILD_DIR)/ata.o: drivers/disks/ata.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-$(BUILD_DIR)/nvme.o: drivers/disks/nvme.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-$(BUILD_DIR)/errno.o: error_handling/errno.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-$(BUILD_DIR)/kernel_panic.o: error_handling/kernel_panic.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-$(BUILD_DIR)/shell.o: shell/shell.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-$(BUILD_DIR)/memory.o: mm/memory.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-$(BUILD_DIR)/buddy.o: mm/allocators/buddy.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-$(BUILD_DIR)/slab.o: mm/allocators/slab.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-$(BUILD_DIR)/kmalloc.o: mm/allocators/kmalloc.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-$(BUILD_DIR)/pmm.o: mm/pmm.c | $(BUILD_DIR)
-	$(CC)  $(CFLAGS) -c $< -o $@
-
-$(BUILD_DIR)/vmm.o: mm/vmm.c | $(BUILD_DIR)
-	$(CC)  $(CFLAGS) -c $< -o $@
-
-$(BUILD_DIR)/vfs.o: fs/vfs.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-$(BUILD_DIR)/ramfs.o: fs/filesystems/ramfs.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-$(BUILD_DIR)/string.o: libc/string.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
 
 # Create directories
 $(BUILD_DIR):
@@ -145,7 +75,7 @@ $(OUTPUT_DIR):
 # ============================================================================
 
 # Create both disk images
-disks:
+disks: | $(OUTPUT_DIR)
 	@echo "Creating disk images..."
 	@qemu-img create -f raw $(ATA_DISK) 512M
 	@qemu-img create -f raw $(NVME_DISK) 1G
@@ -153,18 +83,18 @@ disks:
 	@echo "  - $(ATA_DISK): 512 MB"
 	@echo "  - $(NVME_DISK): 1 GB"
 
-disk-ata:
+disk-ata: | $(OUTPUT_DIR)
 	@echo "Creating ATA disk image..."
 	@qemu-img create -f raw $(ATA_DISK) 512M
 	@echo "Disk created successfully"
 
-disk-nvme:
+disk-nvme: | $(OUTPUT_DIR)
 	@echo "Creating NVMe disk image..."
-	@qemu-img create -f raw $(NVMe_DISK) 1G
+	@qemu-img create -f raw $(NVME_DISK) 1G
 	@echo "Disk created successfully"
 
 # Create larger disk images
-disks-large:
+disks-large: | $(OUTPUT_DIR)
 	@echo "Creating large disk images..."
 	@qemu-img create -f raw $(ATA_DISK) 2G
 	@qemu-img create -f raw $(NVME_DISK) 4G
@@ -193,14 +123,14 @@ diskinfo:
 # ============================================================================
 
 # Run without any disks
-run:
+run: $(OUTPUT_DIR)/ignis.iso
 	$(QEMU) -cdrom $(OUTPUT_DIR)/ignis.iso -serial file:serial.log
 
 # Run with ATA disk only
 run-ata: $(OUTPUT_DIR)/ignis.iso
 	@if [ ! -f $(ATA_DISK) ]; then \
 		echo "ATA disk not found. Creating..."; \
-		qemu-img create -f raw $(ATA_DISK) 512M; \
+		$(MAKE) disk-ata; \
 	fi
 	$(QEMU) -cdrom $(OUTPUT_DIR)/ignis.iso \
 		-drive file=$(ATA_DISK),format=raw,if=ide \
@@ -210,7 +140,7 @@ run-ata: $(OUTPUT_DIR)/ignis.iso
 run-nvme: $(OUTPUT_DIR)/ignis.iso
 	@if [ ! -f $(NVME_DISK) ]; then \
 		echo "NVMe disk not found. Creating..."; \
-		qemu-img create -f raw $(NVME_DISK) 1G; \
+		$(MAKE) disk-nvme; \
 	fi
 	$(QEMU) -cdrom $(OUTPUT_DIR)/ignis.iso \
 		-drive file=$(NVME_DISK),if=none,id=nvm \
@@ -221,11 +151,11 @@ run-nvme: $(OUTPUT_DIR)/ignis.iso
 run-full: $(OUTPUT_DIR)/ignis.iso
 	@if [ ! -f $(ATA_DISK) ]; then \
 		echo "ATA disk not found. Creating..."; \
-		qemu-img create -f raw $(ATA_DISK) 512M; \
+		$(MAKE) disk-ata; \
 	fi
 	@if [ ! -f $(NVME_DISK) ]; then \
 		echo "NVMe disk not found. Creating..."; \
-		qemu-img create -f raw $(NVME_DISK) 1G; \
+		$(MAKE) disk-nvme; \
 	fi
 	$(QEMU) -cdrom $(OUTPUT_DIR)/ignis.iso \
 		-drive file=$(ATA_DISK),format=raw,if=ide \
@@ -237,7 +167,7 @@ run-full: $(OUTPUT_DIR)/ignis.iso
 # Run with debug output
 run-debug: $(OUTPUT_DIR)/ignis.iso
 	@if [ ! -f $(ATA_DISK) ]; then \
-		qemu-img create -f raw $(ATA_DISK) 512M; \
+		$(MAKE) disk-ata; \
 	fi
 	$(QEMU) -cdrom $(OUTPUT_DIR)/ignis.iso \
 		-drive file=$(ATA_DISK),format=raw,if=ide \
@@ -250,7 +180,7 @@ run-debug: $(OUTPUT_DIR)/ignis.iso
 # Run with GDB debugging support
 run-gdb: $(OUTPUT_DIR)/ignis.iso
 	@if [ ! -f $(ATA_DISK) ]; then \
-		qemu-img create -f raw $(ATA_DISK) 512M; \
+		$(MAKE) disk-ata; \
 	fi
 	@echo "Starting QEMU with GDB support on port 1234"
 	@echo "In another terminal, run: gdb iso/boot/kernel.elf"
@@ -262,29 +192,29 @@ run-gdb: $(OUTPUT_DIR)/ignis.iso
 # Run with multiple NVMe devices
 run-multi-nvme: $(OUTPUT_DIR)/ignis.iso
 	@if [ ! -f $(ATA_DISK) ]; then \
-		qemu-img create -f raw $(ATA_DISK) 512M; \
+		$(MAKE) disk-ata; \
 	fi
 	@if [ ! -f $(NVME_DISK) ]; then \
-		qemu-img create -f raw $(NVME_DISK) 1G; \
+		$(MAKE) disk-nvme; \
 	fi
-	@if [ ! -f nvme_disk2.img ]; then \
-		qemu-img create -f raw nvme_disk2.img 1G; \
+	@if [ ! -f $(OUTPUT_DIR)/nvme_disk2.img ]; then \
+		qemu-img create -f raw $(OUTPUT_DIR)/nvme_disk2.img 1G; \
 	fi
 	$(QEMU) -cdrom $(OUTPUT_DIR)/ignis.iso \
 		-drive file=$(ATA_DISK),format=raw,if=ide \
 		-drive file=$(NVME_DISK),if=none,id=nvm1,format=raw \
 		-device nvme,serial=nvme001,drive=nvm1 \
-		-drive file=nvme_disk2.img,if=none,id=nvm2,format=raw \
+		-drive file=$(OUTPUT_DIR)/nvme_disk2.img,if=none,id=nvm2,format=raw \
 		-device nvme,serial=nvme002,drive=nvm2 \
 		-m 512M -serial file:serial.log
 
 # Run in snapshot mode (changes not saved)
 run-snapshot: $(OUTPUT_DIR)/ignis.iso
 	@if [ ! -f $(ATA_DISK) ]; then \
-		qemu-img create -f raw $(ATA_DISK) 512M; \
+		$(MAKE) disk-ata; \
 	fi
 	@if [ ! -f $(NVME_DISK) ]; then \
-		qemu-img create -f raw $(NVME_DISK) 1G; \
+		$(MAKE) disk-nvme; \
 	fi
 	@echo "Running in snapshot mode - changes will NOT be saved"
 	$(QEMU) -cdrom $(OUTPUT_DIR)/ignis.iso \
@@ -295,6 +225,18 @@ run-snapshot: $(OUTPUT_DIR)/ignis.iso
 # ============================================================================
 # UTILITY TARGETS
 # ============================================================================
+
+# Show detected source files (useful for debugging the Makefile)
+show-sources:
+	@echo "=== Detected Source Files ==="
+	@echo "\nC Sources:"
+	@echo "$(C_SOURCES)" | tr ' ' '\n'
+	@echo "\nASM Sources:"
+	@echo "$(ASM_SOURCES)" | tr ' ' '\n'
+	@echo "\nObject Files:"
+	@echo "$(OBJS)" | tr ' ' '\n'
+	@echo "\nVPATH:"
+	@echo "$(VPATH)" | tr ' ' '\n'
 
 # Dump first sector of ATA disk
 dump-ata:
@@ -357,7 +299,7 @@ clean-objs:
 # Clean disk images
 clean-disks:
 	@echo "Removing disk images..."
-	rm -f $(ATA_DISK) $(NVME_DISK) nvme_disk2.img
+	rm -f $(ATA_DISK) $(NVME_DISK) $(OUTPUT_DIR)/nvme_disk2.img
 	rm -f *.img *.qcow2
 	rm -f qemu.log
 	@echo "✓ Disk images removed"
@@ -400,6 +342,7 @@ help:
 	@echo "  make run-snapshot   - Run without saving changes"
 	@echo ""
 	@echo "Utility:"
+	@echo "  make show-sources   - Show all detected source files"
 	@echo "  make help           - Show this help message"
 	@echo ""
 	@echo "Quick Start:"
@@ -407,6 +350,7 @@ help:
 	@echo "  2. make             - Build IGNIS"
 	@echo "  3. make run-full    - Run with all devices"
 
-.PHONY: all clean clean_objs clean-disks clean-all disks disks-large diskinfo \
+.PHONY: all clean clean-objs clean-disks clean-all disks disks-large diskinfo \
         run run-ata run-nvme run-full run-debug run-gdb run-multi-nvme \
-        run-snapshot dump-
+        run-snapshot dump-ata dump-nvme backup-disks restore-disks help \
+        show-sources disk-ata disk-nvme
