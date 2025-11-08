@@ -16,7 +16,9 @@
 #include "mm/allocators/kmalloc.h"
 
 #define CMD_BUFFER_SIZE 256
+#define BACKSPACE_DELAY_TICKS 5
 
+static uint64_t last_backspace_time = 0;
 static char cmd_buffer[CMD_BUFFER_SIZE];
 static size_t cmd_pos = 0;
 
@@ -1314,10 +1316,19 @@ void shell_handle_char(char c) {
     if (c == '\n') {
         shell_execute_command();
     } else if (c == '\b') {
+        // Time lock: check if enough time has passed since last backspace
+        uint64_t current_time = pit_get_ticks();
+        if (current_time - last_backspace_time < BACKSPACE_DELAY_TICKS) {
+            return;
+        }
+
         if (cmd_pos > 0) {
             cmd_pos--;
             cmd_buffer[cmd_pos] = '\0';
+            console_backspace(1);
+            last_backspace_time = current_time;
         }
+
     } else {
         if (cmd_pos < CMD_BUFFER_SIZE - 1) {
             cmd_buffer[cmd_pos++] = c;

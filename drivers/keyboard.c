@@ -70,9 +70,6 @@ void keyboard_handler() {
     if(scancode == 0x0E) {
         if (key_callback) {
             key_callback('\b');
-            console_backspace(1);
-        } else {
-            console_backspace(1);
         }
         return;
     }
@@ -92,8 +89,8 @@ void keyboard_handler() {
         }
     }
 
-    // Print the character if valid
-    if (c) {
+    // Print the character if valid (but not backspace)
+    if (c && c != '\b') {  // Added check to exclude '\b'
         if (key_callback) {
             key_callback(c);
             console_putc(c);
