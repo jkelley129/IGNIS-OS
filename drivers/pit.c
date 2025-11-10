@@ -3,6 +3,7 @@
 #include "driver.h"
 #include "error_handling/errno.h"
 #include "libc/stddef.h"
+#include "scheduler/task.h"
 
 static volatile uint64_t pit_ticks = 0;
 static pit_callback_t tick_callback = 0;
@@ -66,6 +67,7 @@ uint64_t pit_get_ticks(void) {
 
 void pit_handler(void) {
     pit_ticks++;
+    scheduler_tick();
 
     if (tick_callback) {
         tick_callback();

@@ -10,7 +10,6 @@
 #include "mm/memory.h"
 #include "mm/allocators/buddy.h"
 #include "mm/allocators/slab.h"
-#include "mm/allocators/kmalloc.h"
 #include "mm/memory_layout.h"
 #include "fs/vfs.h"
 #include "error_handling/errno.h"
@@ -19,6 +18,7 @@
 #include "fs/filesystems/ramfs.h"
 #include "mm/pmm.h"
 #include "mm/vmm.h"
+#include "scheduler/task.h"
 
 // Define heap area - 1MB heap starting at 2MB
 #define HEAP_START 0x200000
@@ -26,6 +26,28 @@
 
 #define COLOR_SUCCESS (console_color_attr_t){CONSOLE_COLOR_GREEN, CONSOLE_COLOR_BLACK}
 #define COLOR_FAILURE (console_color_attr_t){CONSOLE_COLOR_RED, CONSOLE_COLOR_BLACK}
+
+// Test task functions
+void test_task_1(void) {
+    uint64_t count = 0;
+    while(1) {
+        count++;
+        if (count % 100000000 == 0) {
+            serial_debug_puts("Task 1 running...\n");
+        }
+    }
+}
+
+void test_task_2(void) {
+    uint64_t count = 0;
+    while(1) {
+        count++;
+        if (count % 100000000 == 0) {
+            serial_debug_puts("Task 2 running...\n");
+        }
+    }
+}
+
 
 void kernel_main() {
     //init serial first for debugging things later
@@ -115,10 +137,13 @@ void kernel_main() {
     }
 
     driver_init_all();
-    driver_list();
 
-    //Enable interrupts
     idt_enable_interrupts();
+
+    TRY_INIT("Task System", task_init(), err_count)
+    TRY_INIT("Scheduler", scheduler_init(), err_count)
+
+    driver_list();
 
     keyboard_set_callback(shell_handle_char);
     shell_init();

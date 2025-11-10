@@ -50,9 +50,11 @@ Features in rough chronological order of implementation
   - Buddy allocator
   - Slab allocator
   - Unified allocator interface([mm/allocators/kmalloc.c](https://github.com/jkelley129/IGNIS-OS/blob/main/mm/allocators/kmalloc.c))
+- Process scheduler and task system
 
 ## TODO
 - *(TEST)* Disk drivers for persistent storage(on branch [disk_testing](https://github.com/jkelley129/IGNIS-OS/tree/disk_testing)) **[ ON HOLD ]**
+- Improve and test scheduler logic with multiple processes
 - Implementation of an on-disk filesystem
 - More device drivers for more devices
 - User space with limited permissions
