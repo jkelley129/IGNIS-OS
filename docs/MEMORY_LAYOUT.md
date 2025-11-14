@@ -631,6 +631,3 @@ slab_free(packet_cache, pkt);
    - CMA (Contiguous Memory Allocator)
 
 ---
-
-*Last Updated: January 2025*
-*IGNIS OS Version: 0.0.01*

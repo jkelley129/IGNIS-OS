@@ -487,6 +487,3 @@ If you have questions about contributing:
 Your contributions help make this project better and provide learning opportunities for everyone involved.
 
 ---
-
-*Last Updated: January 2025*
-*IGNIS OS Version: 0.0.01*

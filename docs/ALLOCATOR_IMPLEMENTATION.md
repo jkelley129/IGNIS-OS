@@ -504,7 +504,3 @@ void memory_stress_test() {
 - FreeBSD UMA (Universal Memory Allocator)
 
 ---
-
-**Author**: Josh Kelley  
-**Date**: January 2025  
-**IGNIS OS Version**: 0.0.01

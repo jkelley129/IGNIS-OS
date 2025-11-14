@@ -266,6 +266,3 @@ Common error messages you might see:
 - `Invalid LBA` - Block address out of range
 
 ---
-
-*Last Updated: January 2025*
-*IGNIS OS Version: 0.0.01*
