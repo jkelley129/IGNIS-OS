@@ -109,42 +109,20 @@ task_t* task_create(const char* name, void (*entry_point)(void)) {
     // Setup initial stack with context
     uint64_t* stack_ptr = (uint64_t*)task->stack_top;
 
-    // SS (stack segment)
-    stack_ptr--;
-    *stack_ptr = 0x10;  // Kernel data segment
+    // Reserve space for a proper call frame
+    stack_ptr -= 2;  // Some padding
 
-    // RSP - stack pointer (points to just below this structure)
-    stack_ptr--;
-    *stack_ptr = (uint64_t)stack_ptr;  // Will be updated during switch
-
-    // RFLAGS - CPU flags
-    stack_ptr--;
-    *stack_ptr = 0x202;  // Interrupts enabled (IF=1)
-
-    // CS (code segment)
-    stack_ptr--;
-    *stack_ptr = 0x08;  // Kernel code segment
-
-    // RIP - instruction pointer (where to start)
+    // Push initial "return address" (task entry point)
     stack_ptr--;
     *stack_ptr = (uint64_t)entry_point;
 
-    // General purpose registers (all zero initially)
-    stack_ptr--; *stack_ptr = 0;  // RAX
-    stack_ptr--; *stack_ptr = 0;  // RBX
-    stack_ptr--; *stack_ptr = 0;  // RCX
-    stack_ptr--; *stack_ptr = 0;  // RDX
-    stack_ptr--; *stack_ptr = 0;  // RSI
-    stack_ptr--; *stack_ptr = 0;  // RDI
-    stack_ptr--; *stack_ptr = 0;  // RBP
-    stack_ptr--; *stack_ptr = 0;  // R8
-    stack_ptr--; *stack_ptr = 0;  // R9
-    stack_ptr--; *stack_ptr = 0;  // R10
-    stack_ptr--; *stack_ptr = 0;  // R11
-    stack_ptr--; *stack_ptr = 0;  // R12
-    stack_ptr--; *stack_ptr = 0;  // R13
-    stack_ptr--; *stack_ptr = 0;  // R14
+    // Push callee-saved registers (all zero initially)
     stack_ptr--; *stack_ptr = 0;  // R15
+    stack_ptr--; *stack_ptr = 0;  // R14
+    stack_ptr--; *stack_ptr = 0;  // R13
+    stack_ptr--; *stack_ptr = 0;  // R12
+    stack_ptr--; *stack_ptr = 0;  // RBP
+    stack_ptr--; *stack_ptr = 0;  // RBX
 
     // Context points to this prepared stack
     task->context = (cpu_state_t*)stack_ptr;
@@ -205,9 +183,6 @@ void scheduler_add_task(task_t* task) {
         ready_queue_tail = task;
     }
 
-    serial_debug_puts("[SCHEDULER] Added task to ready queue: ");
-    serial_debug_puts(task->name);
-    serial_debug_puts("\n");
 }
 
 void scheduler_remove_task(task_t* task) {

@@ -15,18 +15,15 @@ typedef enum {
 } task_state_t;
 
 // CPU register state for context switching
-// Order MUST match the push/pop order in task.asm!
 typedef struct {
-    // General purpose registers (pushed by task_switch)
-    uint64_t r15, r14, r13, r12, r11, r10, r9, r8;
-    uint64_t rbp, rdi, rsi, rdx, rcx, rbx, rax;
-
-    // Control registers
-    uint64_t rip;       // Instruction pointer
-    uint64_t cs;        // Code segment (always 0x08 for kernel)
-    uint64_t rflags;    // CPU flags
-    uint64_t rsp;       // Stack pointer
-    uint64_t ss;        // Stack segment (always 0x10 for kernel)
+    // Callee-saved registers (System V AMD64 ABI)
+    uint64_t rbx;
+    uint64_t rbp;
+    uint64_t r12;
+    uint64_t r13;
+    uint64_t r14;
+    uint64_t r15;
+    uint64_t rip;  // Return address
 } __attribute__((packed)) cpu_state_t;
 
 typedef struct task {
@@ -49,7 +46,7 @@ task_t* task_get_current(void);
 void task_yield(void);
 void task_block(void);
 void task_unblock(task_t* task);
-void task_print_list(void);  // NEW: Print all tasks for debugging
+void task_print_list(void);
 
 // Scheduler functions
 kerr_t scheduler_init(void);
