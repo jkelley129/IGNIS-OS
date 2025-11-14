@@ -1,7 +1,6 @@
 #include "shell.h"
 
 #include "driver.h"
-#include "serial.h"
 #include "console/console.h"
 #include "libc/string.h"
 #include "drivers/pit.h"
@@ -14,6 +13,7 @@
 #include "mm/allocators/buddy.h"
 #include "mm/allocators/slab.h"
 #include "mm/allocators/kmalloc.h"
+#include "scheduler/task.h"
 
 #define CMD_BUFFER_SIZE 256
 #define BACKSPACE_DELAY_TICKS 5
@@ -54,6 +54,7 @@ static const shell_command_t commands[] = {
         {"hexdump", "Display file in hexadecimal", cmd_hexdump},
         {"panic", "Test kernel panic (WARNING: will halt system)", cmd_panic},
         {"panictest", "Test panic with assertion", cmd_panictest},
+        {"ps", "Print task list", cmd_ps},
         {0, 0, 0} // Sentinel
 };
 
@@ -1258,6 +1259,10 @@ void cmd_panictest(int argc, char** argv) {
 
     console_puts("\n3. All panic tests passed!\n");
     console_puts("   To trigger an actual panic, use: panic <message>\n\n");
+}
+
+void cmd_ps(int argc, char** argv) {
+    task_print_list();
 }
 
 // ============================================================================

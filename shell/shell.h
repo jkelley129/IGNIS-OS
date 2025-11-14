@@ -49,5 +49,6 @@ void cmd_blktest(int argc, char** argv);
 void cmd_hexdump(int argc, char** argv);
 void cmd_panic(int argc, char** argv);
 void cmd_panictest(int argc, char** argv);
+void cmd_ps(int argc, char** argv);
 
 #endif

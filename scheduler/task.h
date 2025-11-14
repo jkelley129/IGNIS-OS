@@ -49,6 +49,7 @@ task_t* task_get_current(void);
 void task_yield(void);
 void task_block(void);
 void task_unblock(task_t* task);
+void task_print_list(void);  // NEW: Print all tasks for debugging
 
 // Scheduler functions
 kerr_t scheduler_init(void);

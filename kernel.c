@@ -27,27 +27,20 @@
 #define COLOR_SUCCESS (console_color_attr_t){CONSOLE_COLOR_GREEN, CONSOLE_COLOR_BLACK}
 #define COLOR_FAILURE (console_color_attr_t){CONSOLE_COLOR_RED, CONSOLE_COLOR_BLACK}
 
-// Test task functions
-void test_task_1(void) {
-    uint64_t count = 0;
+// Shell task entry point
+void shell_task_entry(void) {
+    serial_debug_puts("Shell task started\n");
+
+    // Initialize shell
+    shell_init();
+
+    // Shell runs forever, processing input
     while(1) {
-        count++;
-        if (count % 100000000 == 0) {
-            serial_debug_puts("Task 1 running...\n");
-        }
+        // Shell is driven by keyboard interrupts
+        // Just yield CPU when nothing to do
+        task_yield();
     }
 }
-
-void test_task_2(void) {
-    uint64_t count = 0;
-    while(1) {
-        count++;
-        if (count % 100000000 == 0) {
-            serial_debug_puts("Task 2 running...\n");
-        }
-    }
-}
-
 
 void kernel_main() {
     //init serial first for debugging things later
@@ -80,7 +73,7 @@ void kernel_main() {
     uint8_t err_count = 0;
     kerr_t status;
 
-    // Initialize interrupts and keyboard
+    // Initialize interrupts
     TRY_INIT("IDT", idt_register(), err_count)
 
     TRY_INIT("Memory", memory_init(PHYS_HEAP_START, PHYS_HEAP_SIZE),err_count)
@@ -138,17 +131,33 @@ void kernel_main() {
 
     driver_init_all();
 
-    idt_enable_interrupts();
-
+    // Initialize task system BEFORE enabling interrupts
     TRY_INIT("Task System", task_init(), err_count)
     TRY_INIT("Scheduler", scheduler_init(), err_count)
 
+    // Create shell task
+    task_t* shell_task = task_create("shell", shell_task_entry);
+    if (shell_task) {
+        scheduler_add_task(shell_task);
+        serial_debug_puts("Shell task created and added to scheduler\n");
+        console_puts("Shell task created\n");
+    } else {
+        console_perror("Failed to create shell task!\n");
+        err_count++;
+    }
+
     driver_list();
 
+    // Set keyboard callback to shell
     keyboard_set_callback(shell_handle_char);
-    shell_init();
 
-    // Infinite loop - interrupts will handle all input for now
+    // NOW enable interrupts - scheduler is ready
+    idt_enable_interrupts();
+
+    serial_debug_puts("Kernel initialization complete, entering idle loop\n");
+    console_puts("\nKernel running. Type 'help' for commands.\n\n");
+
+    // Kernel becomes the idle task - just halt and wait for interrupts
     while(1) {
         asm volatile("hlt");
     }

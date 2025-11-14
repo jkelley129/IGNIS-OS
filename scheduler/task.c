@@ -17,13 +17,16 @@ static task_t* ready_queue_tail = NULL;
 
 // Task exit function - called when task returns
 static void task_exit(void) {
-    serial_debug_puts("Task exited\n");
+    serial_debug_puts("[TASK] Task ");
+    serial_debug_puts(current_task->name);
+    serial_debug_puts(" exited\n");
 
     if (current_task) {
         current_task->state = TERMINATED;
         scheduler_remove_task(current_task);
     }
 
+    // Force immediate context switch
     while(1) {
         task_yield();
     }
@@ -46,7 +49,7 @@ kerr_t task_init(void) {
     ready_queue_head = NULL;
     ready_queue_tail = NULL;
 
-    serial_debug_puts("Task system initialized\n");
+    serial_debug_puts("[TASK] Task system initialized\n");
     return E_OK;
 }
 
@@ -54,21 +57,27 @@ kerr_t scheduler_init(void) {
     // Create idle task
     idle_task = task_create("idle", idle_task_entry);
     if (!idle_task) {
-        serial_debug_puts("Failed to create idle task!\n");
+        serial_debug_puts("[SCHEDULER] Failed to create idle task!\n");
         return E_NOMEM;
     }
 
-    idle_task->state = READY;
+    idle_task->state = RUNNING;
     current_task = idle_task;
 
-    serial_debug_puts("Scheduler initialized with idle task\n");
+    serial_debug_puts("[SCHEDULER] Scheduler initialized with idle task (PID ");
+    char pid_str[16];
+    uitoa(idle_task->pid, pid_str);
+    serial_debug_puts(pid_str);
+    serial_debug_puts(")\n");
+
+    return E_OK;
 }
 
 task_t* task_create(const char* name, void (*entry_point)(void)) {
     // Find free slot
     uint32_t pid = next_pid;
     if (pid >= MAX_TASKS) {
-        serial_debug_puts("Task table full!\n");
+        serial_debug_puts("[TASK] Task table full!\n");
         return NULL;
     }
 
@@ -97,15 +106,16 @@ task_t* task_create(const char* name, void (*entry_point)(void)) {
     task->total_runtime = 0;
     task->next = NULL;
 
+    // Setup initial stack with context
     uint64_t* stack_ptr = (uint64_t*)task->stack_top;
 
-
+    // SS (stack segment)
     stack_ptr--;
     *stack_ptr = 0x10;  // Kernel data segment
 
-    // RSP - stack pointer
+    // RSP - stack pointer (points to just below this structure)
     stack_ptr--;
-    *stack_ptr = (uint64_t)task->stack_top;
+    *stack_ptr = (uint64_t)stack_ptr;  // Will be updated during switch
 
     // RFLAGS - CPU flags
     stack_ptr--;
@@ -143,7 +153,7 @@ task_t* task_create(const char* name, void (*entry_point)(void)) {
     task_table[pid] = task;
     next_pid++;
 
-    serial_debug_puts("Created task: ");
+    serial_debug_puts("[TASK] Created task: ");
     serial_debug_puts(name);
     serial_debug_puts(" (PID ");
     char pid_str[16];
@@ -156,6 +166,10 @@ task_t* task_create(const char* name, void (*entry_point)(void)) {
 
 void task_destroy(task_t* task) {
     if (!task) return;
+
+    serial_debug_puts("[TASK] Destroying task: ");
+    serial_debug_puts(task->name);
+    serial_debug_puts("\n");
 
     // Remove from scheduler
     scheduler_remove_task(task);
@@ -190,6 +204,10 @@ void scheduler_add_task(task_t* task) {
         ready_queue_tail->next = task;
         ready_queue_tail = task;
     }
+
+    serial_debug_puts("[SCHEDULER] Added task to ready queue: ");
+    serial_debug_puts(task->name);
+    serial_debug_puts("\n");
 }
 
 void scheduler_remove_task(task_t* task) {
@@ -216,6 +234,11 @@ void scheduler_remove_task(task_t* task) {
                 ready_queue_tail = prev;
             }
             task->next = NULL;
+
+            serial_debug_puts("[SCHEDULER] Removed task from ready queue: ");
+            serial_debug_puts(task->name);
+            serial_debug_puts("\n");
+
             return;
         }
         prev = curr;
@@ -270,6 +293,17 @@ void scheduler_tick(void) {
             new_task->time_slice = TIME_SLICE_TICKS;
             current_task = new_task;
 
+            // Debug: Log context switch (but not too frequently)
+            static uint64_t switch_count = 0;
+            switch_count++;
+            if (switch_count % 100 == 0) {
+                serial_debug_puts("[SCHEDULER] Context switch: ");
+                serial_debug_puts(old_task->name);
+                serial_debug_puts(" -> ");
+                serial_debug_puts(new_task->name);
+                serial_debug_puts("\n");
+            }
+
             // Perform context switch
             task_switch(&old_task->context, new_task->context);
         } else {
@@ -289,6 +323,10 @@ void task_yield(void) {
 void task_block(void) {
     if (!current_task) return;
 
+    serial_debug_puts("[TASK] Blocking task: ");
+    serial_debug_puts(current_task->name);
+    serial_debug_puts("\n");
+
     current_task->state = BLOCKED;
     task_yield();
 }
@@ -296,5 +334,78 @@ void task_block(void) {
 void task_unblock(task_t* task) {
     if (!task || task->state != BLOCKED) return;
 
+    serial_debug_puts("[TASK] Unblocking task: ");
+    serial_debug_puts(task->name);
+    serial_debug_puts("\n");
+
     scheduler_add_task(task);
+}
+
+// Utility function to print task list (for debugging)
+void task_print_list(void) {
+    console_puts("\n=== Task List ===\n");
+    console_puts("PID  Name            State      Runtime\n");
+    console_puts("-------------------------------------------\n");
+
+    for (uint32_t i = 0; i < next_pid; i++) {
+        if (task_table[i]) {
+            task_t* t = task_table[i];
+            char num_str[32];
+
+            // PID
+            uitoa(t->pid, num_str);
+            console_puts(num_str);
+
+            // Padding
+            size_t len = strlen(num_str);
+            for (size_t j = len; j < 5; j++) console_putc(' ');
+
+            // Name
+            console_puts(t->name);
+            len = strlen(t->name);
+            for (size_t j = len; j < 16; j++) console_putc(' ');
+
+            // State
+            const char* state_str;
+            console_color_attr_t state_color;
+            switch (t->state) {
+                case READY:
+                    state_str = "READY";
+                    state_color = (console_color_attr_t){CONSOLE_COLOR_GREEN, CONSOLE_COLOR_BLACK};
+                    break;
+                case RUNNING:
+                    state_str = "RUNNING";
+                    state_color = (console_color_attr_t){CONSOLE_COLOR_LIGHT_GREEN, CONSOLE_COLOR_BLACK};
+                    break;
+                case BLOCKED:
+                    state_str = "BLOCKED";
+                    state_color = (console_color_attr_t){CONSOLE_COLOR_BROWN, CONSOLE_COLOR_BLACK};
+                    break;
+                case TERMINATED:
+                    state_str = "TERMINATED";
+                    state_color = (console_color_attr_t){CONSOLE_COLOR_RED, CONSOLE_COLOR_BLACK};
+                    break;
+                default:
+                    state_str = "UNKNOWN";
+                    state_color = (console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK};
+            }
+
+            console_puts_color(state_str, state_color);
+            len = strlen(state_str);
+            for (size_t j = len; j < 11; j++) console_putc(' ');
+
+            // Runtime
+            uitoa(t->total_runtime, num_str);
+            console_puts(num_str);
+            console_puts(" ticks\n");
+        }
+    }
+
+    console_puts("\nCurrent task: ");
+    if (current_task) {
+        console_puts(current_task->name);
+    } else {
+        console_puts("(none)");
+    }
+    console_puts("\n\n");
 }

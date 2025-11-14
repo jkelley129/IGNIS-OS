@@ -12,6 +12,7 @@
 | `lsdrv`     | `lsdrv`       | List all registered drivers    |
 | `panic`     | `panic <msg>` | Initiates kernel panic         |
 | `panictest` | `panictest`   | Tests kernel panic macros      |
+ | `ps`       | `ps`          | Print task list                |
 
 ## Memory Management Commands
 
