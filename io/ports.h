@@ -28,7 +28,7 @@ static inline void outw(uint16_t port, uint16_t data) {
 }
 
 // Read 32 bits from a port
-static inline uint16_t inl(uint16_t port) {
+static inline uint32_t inl(uint16_t port) {
     uint32_t result;
     asm volatile("inl %1, %0" : "=a"(result) : "Nd"(port));
     return result;

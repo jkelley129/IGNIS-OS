@@ -170,8 +170,13 @@ run-debug: $(OUTPUT_DIR)/ignis.iso
 	@if [ ! -f $(ATA_DISK) ]; then \
 		$(MAKE) disk-ata; \
 	fi
+	@if [ ! -f $NVME_DISK ]; then \
+  		$(MAKE) disk-nvme; \
+  	fi
 	$(QEMU) -cdrom $(OUTPUT_DIR)/ignis.iso \
 		-drive file=$(ATA_DISK),format=raw,if=ide \
+		-drive file=$(NVME_DISK),if=none,id=nvm,format=raw \
+		-device nvme,serial=deadbeef,drive=nvm \
 		-d guest_errors,int \
 		-D qemu.log \
 		-no-reboot \

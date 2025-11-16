@@ -2,6 +2,7 @@
 #include "block.h"
 #include "driver.h"
 #include "console/console.h"
+#include "io/serial.h"
 #include "io/ports.h"
 #include "libc/string.h"
 #include "mm/memory.h"
@@ -66,31 +67,64 @@ static inline uint32_t pci_get_address(uint8_t bus, uint8_t slot, uint8_t func, 
 
 //PCI configuration space access
 static uint32_t pci_read_config(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset){
-    uint32_t address = pci_get_address(bus,slot,func,offset);
+    uint32_t address = pci_get_address(bus, slot, func, offset);
     outl(PCI_CONFIG_ADDRESS, address);
-    return inl(PCI_CONFIG_DATA + (offset & 3));
+    return inl(PCI_CONFIG_DATA);
 }
 
 static void pci_write_config(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset, uint32_t value){
     uint32_t address = pci_get_address(bus, slot, func, offset);
     outl(PCI_CONFIG_ADDRESS, address);
-    outl(PCI_CONFIG_DATA + (offset & 3), value);
+    outl(PCI_CONFIG_DATA, value);
 }
 
 
 //Find NVMe controller on PCI bus
 static int nvme_find_controller(uint8_t* bus, uint8_t* slot, uint8_t* func){
+    serial_debug_puts("[NVME] Scanning PCI bus for NVMe controller...\n");
+
     for (uint16_t b = 0; b < 256; b++){
         for(uint8_t s = 0; s < 32; s++){
-            uint16_t vendor = pci_read_config(b, s, 0, PCI_VENDOR_ID);
+            // Read vendor/device ID at offset 0x00 (one 32-bit read)
+            uint32_t vendor_device = pci_read_config(b, s, 0, 0x00);
+            uint16_t vendor = vendor_device & 0xFFFF;
+            uint16_t device = (vendor_device >> 16) & 0xFFFF;
+
+            // Skip if no device present
             if(vendor == 0xFFFF) continue;
 
-            //Check class code for NVMe Express controller (0x01 = Mass Storage, 0x08 = NVM, 0x02 = NVMe)
-            uint8_t class_code = pci_read_config(b,s,0,0x0B);
-            uint8_t subclass = pci_read_config(b,s,0,0x0A);
-            uint8_t prog_if = pci_read_config(b,s,0,0x09);
+            // Read class code register at offset 0x08 (one 32-bit read)
+            // Register format: [Class Code | Subclass | Prog IF | Revision ID]
+            //                  [31:24      | 23:16    | 15:8    | 7:0        ]
+            uint32_t class_reg = pci_read_config(b, s, 0, 0x08);
+            uint8_t revision = class_reg & 0xFF;
+            uint8_t prog_if = (class_reg >> 8) & 0xFF;
+            uint8_t subclass = (class_reg >> 16) & 0xFF;
+            uint8_t class_code = (class_reg >> 24) & 0xFF;
 
+
+            serial_debug_puts("[NVME] Device at ");
+            serial_puthex(COM1, b, 2);
+            serial_debug_puts(":");
+            serial_puthex(COM1, s, 2);
+            serial_debug_puts(" - Vendor: ");
+            serial_puthex(COM1, vendor, 4);
+            serial_debug_puts(" Device: ");
+            serial_puthex(COM1, device, 4);
+            serial_debug_puts(" Class: ");
+            serial_puthex(COM1, class_code, 2);
+            serial_debug_puts("/");
+            serial_puthex(COM1, subclass, 2);
+            serial_debug_puts("/");
+            serial_puthex(COM1, prog_if, 2);
+            serial_debug_puts("\n");
+
+            // Check for NVMe Express controller
+            // Class 0x01 = Mass Storage Controller
+            // Subclass 0x08 = Non-Volatile Memory controller
+            // ProgIF 0x02 = NVM Express
             if(class_code == 0x01 && subclass == 0x08 && prog_if == 0x02){
+                serial_debug_puts("[NVME] Found NVMe controller!\n");
                 *bus = b;
                 *slot = s;
                 *func = 0;
@@ -98,6 +132,8 @@ static int nvme_find_controller(uint8_t* bus, uint8_t* slot, uint8_t* func){
             }
         }
     }
+
+    serial_debug_puts("[NVME] No NVMe controller found\n");
     return 0;
 }
 
