@@ -1,6 +1,7 @@
 #include "shell.h"
 
 #include "driver.h"
+#include "serial.h"
 #include "console/console.h"
 #include "libc/string.h"
 #include "drivers/pit.h"
@@ -9,6 +10,7 @@
 #include "fs/vfs.h"
 #include "error_handling/errno.h"
 #include "error_handling/kernel_panic.h"
+#include "interrupts/idt.h"
 #include "mm/pmm.h"
 #include "mm/allocators/buddy.h"
 #include "mm/allocators/slab.h"
@@ -55,6 +57,8 @@ static const shell_command_t commands[] = {
         {"panic", "Test kernel panic (WARNING: will halt system)", cmd_panic},
         {"panictest", "Test panic with assertion", cmd_panictest},
         {"ps", "Print task list", cmd_ps},
+        {"reboot", "Reboots the system with a triple fault", cmd_reboot},
+        {"banner", "Displays a fun system banner", cmd_banner},
         {0, 0, 0} // Sentinel
 };
 
@@ -1263,6 +1267,30 @@ void cmd_panictest(int argc, char** argv) {
 
 void cmd_ps(int argc, char** argv) {
     task_print_list();
+}
+
+void cmd_reboot(int argc, char** argv) {
+    console_puts("\nRebooting system...\n");
+
+    idt_ptr_t invalid_idt;
+    invalid_idt.limit = 0;
+    invalid_idt.base = 0;
+
+    asm volatile("lidt %0" :: "m"(invalid_idt));
+    asm volatile("int $0x03");  // Trigger interrupt with broken IDT
+}
+
+void cmd_banner(int argc, char** argv) {
+    console_set_color((console_color_attr_t){CONSOLE_COLOR_RED, CONSOLE_COLOR_BLACK});
+    console_puts("\n");
+    console_puts(" _____ _____ _   _ _____ _____ \n");
+    console_puts("|_   _|  __ \\ \\ | |_   _/  ___|\n");
+    console_puts("  | | | |  \\/|  \\| | | | \\ `--. \n");
+    console_puts("  | | | | __ | . ` | | |  `--. \\\n");
+    console_puts(" _| |_| |_\\ \\| |\\  |_| |_/\\__/ /\n");
+    console_puts(" \\___/ \\____/\\_| \\_/\\___/\\____/ \n");
+    console_puts("\n");
+    console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
 }
 
 // ============================================================================
