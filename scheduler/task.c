@@ -115,12 +115,10 @@ kerr_t scheduler_init(void) {
 }
 
 static void task_return_error(void) {
+    console_perror("\nERROR: Task returned without calling task_exit()\nSee serial debug for details.\n");
     serial_debug_puts("\n[TASK] CRITICAL ERROR: Task ");
     serial_debug_puts(current_task->name);
     serial_debug_puts(" returned without calling task_exit()!\n");
-    serial_debug_puts("[TASK] This is a bug in the task code - tasks must either:\n");
-    serial_debug_puts("[TASK]   1. Call task_exit() when done, or\n");
-    serial_debug_puts("[TASK]   2. Loop forever (never return)\n");
     serial_debug_puts("[TASK] System halting to prevent corruption.\n");
 
     // Halt the system - this is a critical programming error
@@ -167,7 +165,12 @@ task_t* task_create(const char* name, void (*entry_point)(void)) {
     // Reserve space for a proper call frame
     stack_ptr -= 2;  // Some padding
 
-    // Push initial "return address" (task entry point)
+    // Push safety net: if task returns, it will jump here and halt with error
+    stack_ptr--;
+    *stack_ptr = (uint64_t)task_return_error;
+
+    // Push entry point as "return address"
+    // When task_switch returns, it will jump to the entry point
     stack_ptr--;
     *stack_ptr = (uint64_t)entry_point;
 
