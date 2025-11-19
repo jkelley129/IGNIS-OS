@@ -1,4 +1,4 @@
-; boot.asm - Bootloader with 128MB direct map
+section .note.GNU-stack
 section .multiboot
 align 8
 multiboot_header:

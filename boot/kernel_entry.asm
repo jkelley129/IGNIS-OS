@@ -1,3 +1,4 @@
+section .note.GNU-stack
 bits 64
 section .text
 
