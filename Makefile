@@ -308,7 +308,10 @@ clean-disks:
 	rm -f $(ATA_DISK) $(NVME_DISK) $(OUTPUT_DIR)/nvme_disk2.img
 	rm -f *.img *.qcow2
 	rm -f qemu.log
-	@echo "✓ Disk images removed"
+	@echo "Disk images removed"
+
+clean-logs:
+	rm -f serial.log qemu.log
 
 # Clean everything including backups
 clean-all: clean clean-disks
@@ -356,7 +359,7 @@ help:
 	@echo "  2. make             - Build IGNIS"
 	@echo "  3. make run-full    - Run with all devices"
 
-.PHONY: all clean clean-objs clean-disks clean-all disks disks-large diskinfo \
+.PHONY: all clean clean-objs clean-disks clean-logs clean-all disks disks-large diskinfo \
         run run-ata run-nvme run-full run-debug run-gdb run-multi-nvme \
         run-snapshot dump-ata dump-nvme backup-disks restore-disks help \
         show-sources disk-ata disk-nvme
