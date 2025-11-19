@@ -43,6 +43,7 @@ typedef struct task {
 // Task management API
 kerr_t task_init(void);
 task_t* task_create(const char* name, void (*entry_point)(void));
+void task_exit(void);
 void task_destroy(task_t* task);
 task_t* task_get_current(void);
 void task_yield(void);

@@ -19,19 +19,56 @@ static task_t* sleep_queue_head = NULL;
 #define TIME_SLICE_TICKS 10  // 100ms at 100Hz
 
 // Task exit function - called when task returns
-static void task_exit(void) {
-    serial_debug_puts("[TASK] Task ");
-    serial_debug_puts(current_task->name);
-    serial_debug_puts(" exited\n");
+void task_exit(void) {
+    if (!current_task) return;
 
-    if (current_task) {
-        current_task->state = TERMINATED;
-        scheduler_remove_task(current_task);
+    // Don't let idle task exit
+    if (current_task == idle_task) {
+        serial_debug_puts("[TASK] Idle task attempted to exit - halting\n");
+        while(1) asm volatile("hlt");
     }
 
-    // Force immediate context switch
-    while(1) {
-        task_yield();
+    serial_debug_puts("[TASK] Task ");
+    serial_debug_puts(current_task->name);
+    serial_debug_puts(" exiting\n");
+
+    current_task->state = TERMINATED;
+
+    scheduler_remove_task(current_task);
+
+    current_task->time_slice = 0;
+    scheduler_tick();
+
+    // Should never reach here
+    serial_debug_puts("[TASK] CRITICAL: Task continued after exit!\n");
+    while(1) asm volatile("hlt");
+}
+
+static void scheduler_reap_terminated(void) {
+    // Scan task table for terminated tasks
+    for (uint32_t i = 0; i < MAX_TASKS; i++) {
+        task_t* task = task_table[i];
+
+        if (task && task->state == TERMINATED && task != current_task) {
+            serial_debug_puts("[SCHEDULER] Reaping terminated task: ");
+            serial_debug_puts(task->name);
+            serial_debug_puts(" (PID ");
+            char pid_str[16];
+            uitoa(task->pid, pid_str);
+            serial_debug_puts(pid_str);
+            serial_debug_puts(")\n");
+
+            // Free stack
+            if (task->stack_base) {
+                kfree(task->stack_base);
+            }
+
+            // Remove from task table
+            task_table[i] = NULL;
+
+            // Free task structure
+            kfree(task);
+        }
     }
 }
 
@@ -150,12 +187,34 @@ task_t* task_create(const char* name, void (*entry_point)(void)) {
 void task_destroy(task_t* task) {
     if (!task) return;
 
+    if (task == current_task) {
+        serial_debug_puts("[TASK] Error: Cannot destroy current task - use task_exit()\n");
+        return;
+    }
+
     serial_debug_puts("[TASK] Destroying task: ");
     serial_debug_puts(task->name);
     serial_debug_puts("\n");
 
-    // Remove from scheduler
+    // Mark as terminated
+    task->state = TERMINATED;
+
+    // Remove from scheduler queues
     scheduler_remove_task(task);
+
+    // Also remove from sleep queue if sleeping
+    if (sleep_queue_head == task) {
+        sleep_queue_head = task->next;
+    } else {
+        task_t* curr = sleep_queue_head;
+        while (curr && curr->next) {
+            if (curr->next == task) {
+                curr->next = task->next;
+                break;
+            }
+            curr = curr->next;
+        }
+    }
 
     // Free resources
     if (task->stack_base) {
@@ -286,6 +345,13 @@ void scheduler_tick(void) {
 
     scheduler_check_sleeping_tasks();
 
+    // Reap every 100 ticks (~1 second at 100Hz)
+    static uint64_t reap_counter = 0;
+    if (++reap_counter >= 100) {
+        reap_counter = 0;
+        scheduler_reap_terminated();
+    }
+
     // Decrement time slice
     if (current_task->time_slice > 0) {
         current_task->time_slice--;
@@ -334,6 +400,10 @@ void scheduler_tick(void) {
 
 void task_yield(void) {
     if (!current_task) return;
+
+    serial_debug_puts("yielding task ");
+    serial_debug_puts(current_task->name);
+    serial_debug_putc('\n');
 
     current_task->time_slice = 0;  // Force switch
     scheduler_tick();
