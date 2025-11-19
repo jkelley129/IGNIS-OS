@@ -3,6 +3,7 @@
 #include "libc/string.h"
 #include "console/console.h"
 #include "io/serial.h"
+#include "drivers/pit.h"
 
 static task_t* task_table[MAX_TASKS];
 static uint32_t next_pid = 0;
@@ -12,6 +13,8 @@ static task_t* idle_task = NULL;
 // Simple round-robin queue
 static task_t* ready_queue_head = NULL;
 static task_t* ready_queue_tail = NULL;
+
+static task_t* sleep_queue_head = NULL;
 
 #define TIME_SLICE_TICKS 10  // 100ms at 100Hz
 
@@ -48,6 +51,7 @@ kerr_t task_init(void) {
     current_task = NULL;
     ready_queue_head = NULL;
     ready_queue_tail = NULL;
+    sleep_queue_head = NULL;
 
     serial_debug_puts("[TASK] Task system initialized\n");
     return E_OK;
@@ -105,6 +109,7 @@ task_t* task_create(const char* name, void (*entry_point)(void)) {
     task->time_slice = TIME_SLICE_TICKS;
     task->total_runtime = 0;
     task->next = NULL;
+    task->wake_time = 0;
 
     // Setup initial stack with context
     uint64_t* stack_ptr = (uint64_t*)task->stack_top;
@@ -239,8 +244,47 @@ task_t* scheduler_pick_next(void) {
     return next;
 }
 
+static void scheduler_check_sleeping_tasks(void) {
+    if (!sleep_queue_head) return;
+
+    uint64_t current_ticks = pit_get_ticks();
+    task_t* prev = NULL;
+    task_t* curr = sleep_queue_head;
+
+    while (curr) {
+        task_t* next = curr->next;
+
+        if (current_ticks >= curr->wake_time) {
+            if (prev) {
+                prev->next = next;
+            } else {
+                sleep_queue_head = next;
+            }
+
+            // Add to ready queue
+            curr->next = NULL;
+            scheduler_add_task(curr);
+
+            serial_debug_puts("[SCHEDULER] Woke up task: ");
+            serial_debug_puts(curr->name);
+            serial_debug_puts(" at tick ");
+            char tick_str[16];
+            uitoa(current_ticks, tick_str);
+            serial_debug_puts(tick_str);
+            serial_debug_puts("\n");
+
+            curr = next;
+        } else {
+            prev = curr;
+            curr = next;
+        }
+    }
+}
+
 void scheduler_tick(void) {
     if (!current_task) return;
+
+    scheduler_check_sleeping_tasks();
 
     // Decrement time slice
     if (current_task->time_slice > 0) {
@@ -316,6 +360,42 @@ void task_unblock(task_t* task) {
     scheduler_add_task(task);
 }
 
+void task_sleep(uint64_t ticks) {
+    if (!current_task || ticks == 0) return;
+
+    if (current_task == idle_task) {
+        return;
+    }
+
+    serial_debug_puts("[TASK] Task ");
+    serial_debug_puts(current_task->name);
+    serial_debug_puts(" sleeping for ");
+    char ticks_str[16];
+    uitoa(ticks, ticks_str);
+    serial_debug_puts(ticks_str);
+    serial_debug_puts(" ticks (current tick: ");
+
+    uint64_t current_ticks = pit_get_ticks();
+    uitoa(current_ticks, ticks_str);
+    serial_debug_puts(ticks_str);
+    serial_debug_puts(", wake at ");
+
+    uint64_t wake_time = current_ticks + ticks;
+    current_task->wake_time = wake_time;
+
+    uitoa(wake_time, ticks_str);
+    serial_debug_puts(ticks_str);
+    serial_debug_puts(")\n");
+
+    current_task->state = SLEEPING;
+
+    current_task->next = sleep_queue_head;
+    sleep_queue_head = current_task;
+
+    current_task->time_slice = 0;
+    scheduler_tick();
+}
+
 // Utility function to print task list (for debugging)
 void task_print_list(void) {
     console_puts("\n=== Task List ===\n");
@@ -355,6 +435,10 @@ void task_print_list(void) {
                 case BLOCKED:
                     state_str = "BLOCKED";
                     state_color = (console_color_attr_t){CONSOLE_COLOR_BROWN, CONSOLE_COLOR_BLACK};
+                    break;
+                case SLEEPING:
+                    state_str = "SLEEPING";
+                    state_color = (console_color_attr_t){CONSOLE_COLOR_CYAN, CONSOLE_COLOR_BLACK};
                     break;
                 case TERMINATED:
                     state_str = "TERMINATED";

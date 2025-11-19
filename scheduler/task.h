@@ -11,7 +11,8 @@ typedef enum {
     READY,
     RUNNING,
     BLOCKED,
-    TERMINATED
+    SLEEPING,
+    TERMINATED,
 } task_state_t;
 
 // CPU register state for context switching
@@ -35,6 +36,7 @@ typedef struct task {
     void* stack_top;                 // Top of stack (grows down)
     uint64_t time_slice;             // Remaining time slice (in ticks)
     uint64_t total_runtime;          // Total ticks this task has run
+    uint64_t wake_time;              // Tick count to wake up for
     struct task* next;               // Next task in scheduler queue
 } task_t;
 
@@ -46,6 +48,7 @@ task_t* task_get_current(void);
 void task_yield(void);
 void task_block(void);
 void task_unblock(task_t* task);
+void task_sleep(uint64_t ticks);
 void task_print_list(void);
 
 // Scheduler functions
