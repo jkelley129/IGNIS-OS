@@ -1,8 +1,8 @@
 #ifndef VMM_H
 #define VMM_H
 
-#include "../libc/stdint.h"
-#include "../error_handling/errno.h"
+#include "libc/stdint.h"
+#include "error_handling/errno.h"
 #include "memory_layout.h"
 
 // Virtual memory manager - handles page table manipulation

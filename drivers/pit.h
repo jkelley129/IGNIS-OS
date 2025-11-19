@@ -1,7 +1,7 @@
 #ifndef PIT_H
 #define PIT_H
 
-#include "../libc/stdint.h"
+#include "libc/stdint.h"
 #include "error_handling/errno.h"
 
 #define PIT_FREQUENCY 1193182  // Base frequency of PIT in Hz

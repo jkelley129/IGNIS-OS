@@ -1,8 +1,8 @@
 #ifndef NVME_H
 #define NVME_H
 
-#include "../../libc/stdint.h"
-#include "../../error_handling/errno.h"
+#include "libc/stdint.h"
+#include "error_handling/errno.h"
 
 // NVMe Register Offsets
 #define NVME_REG_CAP    0x00  // Controller Capabilities

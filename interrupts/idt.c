@@ -1,6 +1,6 @@
 #include "idt.h"
 #include "io/ports.h"
-#include "../drivers/driver.h"
+#include "drivers/driver.h"
 #include "console/console.h"
 #include "libc/stddef.h"
 #include "error_handling/errno.h"

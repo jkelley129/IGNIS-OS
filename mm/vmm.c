@@ -1,8 +1,8 @@
 #include "vmm.h"
 #include "pmm.h"
-#include "../console/console.h"
-#include "../io/serial.h"
-#include "../libc/string.h"
+#include "console/console.h"
+#include "io/serial.h"
+#include "libc/string.h"
 #include "interrupts/idt.h"
 
 // Page table entry indices from virtual address

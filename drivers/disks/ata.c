@@ -1,10 +1,10 @@
 #include "ata.h"
-#include "../block.h"
-#include "../driver.h"
-#include "../../io/ports.h"
-#include "../../console/console.h"
-#include "../../libc/string.h"
-#include "../../error_handling/errno.h"
+#include "block.h"
+#include "driver.h"
+#include "io/ports.h"
+#include "console/console.h"
+#include "libc/string.h"
+#include "error_handling/errno.h"
 
 typedef struct {
     uint16_t base;// Base I/O port

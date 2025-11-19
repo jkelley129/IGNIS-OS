@@ -1,9 +1,9 @@
 #ifndef SERIAL_H
 #define SERIAL_H
 
-#include "../libc/stddef.h"
-#include "../libc/stdint.h"
-#include "../error_handling/errno.h"
+#include "libc/stddef.h"
+#include "libc/stdint.h"
+#include "error_handling/errno.h"
 
 // COM port addresses
 #define COM1 0x3F8

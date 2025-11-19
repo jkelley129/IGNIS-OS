@@ -1,8 +1,8 @@
 #ifndef KMALLOC_H
 #define KMALLOC_H
 
-#include "../../libc/stdint.h"
-#include "../../libc/stddef.h"
+#include "libc/stdint.h"
+#include "libc/stddef.h"
 
 // Unified kernel memory allocation interface
 void* kmalloc(size_t size);

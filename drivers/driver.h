@@ -1,8 +1,8 @@
 #ifndef DRIVER_H
 #define DRIVER_H
 
-#include "../libc/stdint.h"
-#include "../error_handling/errno.h"
+#include "libc/stdint.h"
+#include "error_handling/errno.h"
 
 #define MAX_DRIVERS 32
 #define DRIVER_NAME_MAX 32

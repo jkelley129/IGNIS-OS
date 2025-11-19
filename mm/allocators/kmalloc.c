@@ -1,10 +1,10 @@
 #include "kmalloc.h"
 #include "slab.h"
 #include "buddy.h"
-#include "../pmm.h"
-#include "../memory_layout.h"
-#include "../../console/console.h"
-#include "../../libc/string.h"
+#include "mm/pmm.h"
+#include "mm/memory_layout.h"
+#include "console/console.h"
+#include "libc/string.h"
 
 /*
  * - Requests ≤ 4KB go to slab allocator

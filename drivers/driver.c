@@ -1,7 +1,7 @@
 #include "driver.h"
 #include "serial.h"
-#include "../console/console.h"
-#include "../libc/string.h"
+#include "console/console.h"
+#include "libc/string.h"
 
 // Driver registry
 static driver_t* driver_registry[MAX_DRIVERS];

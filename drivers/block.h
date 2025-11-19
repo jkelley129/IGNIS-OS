@@ -1,8 +1,8 @@
 #ifndef BLOCK_H
 #define BLOCK_H
 
-#include "../libc/stdint.h"
-#include "../error_handling/errno.h"
+#include "libc/stdint.h"
+#include "error_handling/errno.h"
 
 #define BLOCK_SIZE 512
 #define MAX_BLOCK_DEVICES 8

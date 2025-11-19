@@ -1,5 +1,5 @@
 #include "pit.h"
-#include "../io/ports.h"
+#include "io/ports.h"
 #include "driver.h"
 #include "error_handling/errno.h"
 #include "libc/stddef.h"

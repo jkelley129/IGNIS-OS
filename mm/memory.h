@@ -1,8 +1,8 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
-#include "../libc/stdint.h"
-#include "../libc/stddef.h"
+#include "libc/stdint.h"
+#include "libc/stddef.h"
 #include "error_handling/errno.h"
 
 // Memory allocation block header

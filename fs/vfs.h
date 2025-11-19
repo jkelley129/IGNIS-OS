@@ -1,9 +1,9 @@
 #ifndef VFS_H
 #define VFS_H
 
-#include "../libc/stdint.h"
-#include "../libc/string.h"
-#include "../error_handling/errno.h"
+#include "libc/stdint.h"
+#include "libc/string.h"
+#include "error_handling/errno.h"
 
 #define MAX_FILENAME 64
 #define MAX_PATH 256

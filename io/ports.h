@@ -1,7 +1,7 @@
 #ifndef PORTS_H
 #define PORTS_H
 
-#include "../libc/stdint.h"
+#include "libc/stdint.h"
 
 // Read a byte from a port
 static inline uint8_t inb(uint16_t port) {

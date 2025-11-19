@@ -1,7 +1,7 @@
 #ifndef KERNEL_PANIC_H
 #define KERNEL_PANIC_H
 
-#include "../libc/stdint.h"
+#include "libc/stdint.h"
 
 // Panic with a message
 void kernel_panic(const char* message);

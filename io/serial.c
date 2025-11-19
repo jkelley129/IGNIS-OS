@@ -1,6 +1,6 @@
 #include "serial.h"
 #include "ports.h"
-#include "../libc/string.h"
+#include "libc/string.h"
 
 static int serial_is_buffer_empty(uint16_t port) {
     return inb(port + SERIAL_LINE_STATUS) & SERIAL_LSR_TX_EMPTY;

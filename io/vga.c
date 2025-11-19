@@ -1,5 +1,5 @@
 #include "vga.h"
-#include "../console/console.h"
+#include "console/console.h"
 #include "mm/memory_layout.h"
 
 // VGA-specific state

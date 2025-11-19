@@ -1,11 +1,11 @@
 #include "kernel_panic.h"
-#include "../console/console.h"
-#include "../io/serial.h"
-#include "../interrupts/idt.h"
-#include "../libc/string.h"
-#include "../drivers/pit.h"
-#include "../mm/pmm.h"
-#include "../mm/memory_layout.h"
+#include "console/console.h"
+#include "io/serial.h"
+#include "interrupts/idt.h"
+#include "libc/string.h"
+#include "drivers/pit.h"
+#include "mm/pmm.h"
+#include "mm/memory_layout.h"
 
 // Panic state to prevent recursive panics
 static volatile int panic_in_progress = 0;

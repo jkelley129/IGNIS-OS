@@ -143,7 +143,7 @@ If you want to contribute a large feature, please open an issue first to discuss
 
 // Includes - grouped and sorted
 #include "kernel_headers.h"
-#include "../libc/string.h"
+#include "libc/string.h"
 
 // Constants - ALL_CAPS
 #define MAX_BUFFER_SIZE 256

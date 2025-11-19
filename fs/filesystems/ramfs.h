@@ -1,8 +1,8 @@
 #ifndef RAMFS_H
 #define RAMFS_H
 
-#include "../vfs.h"
-#include "../../error_handling/errno.h"
+#include "fs/vfs.h"
+#include "error_handling/errno.h"
 
 // RAM filesystem specific node structure
 typedef struct ramfs_node {

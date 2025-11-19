@@ -1,8 +1,8 @@
 #ifndef ATA_H
 #define ATA_H
 
-#include "../../libc/stdint.h"
-#include "../../error_handling/errno.h"
+#include "libc/stdint.h"
+#include "error_handling/errno.h"
 
 // ATA I/O Ports (Primary Bus)
 #define ATA_PRIMARY_DATA       0x1F0

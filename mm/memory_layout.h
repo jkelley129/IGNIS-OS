@@ -1,7 +1,7 @@
 #ifndef MEMORY_LAYOUT_H
 #define MEMORY_LAYOUT_H
 
-#include "../libc/stdint.h"
+#include "libc/stdint.h"
 
 /*
  * IGNIS OS Memory Layout

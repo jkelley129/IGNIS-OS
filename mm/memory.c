@@ -1,8 +1,8 @@
 #include "memory.h"
 #include "pmm.h"
 #include "memory_layout.h"
-#include "../console/console.h"
-#include "../libc/string.h"
+#include "console/console.h"
+#include "libc/string.h"
 #include "error_handling/errno.h"
 
 // Full definition of heap structure (hidden from other files)

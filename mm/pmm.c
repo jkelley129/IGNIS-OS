@@ -1,7 +1,7 @@
 #include "pmm.h"
-#include "../console/console.h"
-#include "../libc/string.h"
-#include "../io/serial.h"
+#include "console/console.h"
+#include "libc/string.h"
+#include "io/serial.h"
 
 //Bitmap to track page allocation status
 //Each bit represents a 4KB page

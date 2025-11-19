@@ -1,8 +1,8 @@
 #ifndef CONSOLE_H
 #define CONSOLE_H
 
-#include "../libc/stdint.h"
-#include "../error_handling/errno.h"
+#include "libc/stdint.h"
+#include "error_handling/errno.h"
 
 // Console color type (backend-agnostic)
 typedef enum {

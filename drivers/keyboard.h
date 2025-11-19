@@ -1,8 +1,6 @@
 #ifndef KEYBOARD_H
 #define KEYBOARD_H
 
-#include "../libc/stdint.h"
-#include "../io/ports.h"
 #include "error_handling/errno.h"
 
 #define KEYBOARD_DATA_PORT 0x60
