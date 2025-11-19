@@ -14,6 +14,7 @@ const char* k_strerror(kerr_t err){
         case E_TIMEOUT: return "Operation Timed Out";
         case E_PERM: return "Permission denied";
         case E_HARDWARE: return "Hardware fault";
+        default: return  "Unknown";
     }
 }
 
