@@ -1,5 +1,6 @@
 #include "keyboard.h"
 #include "console/console.h"
+#include "io/ports.h"
 #include "driver.h"
 #include "error_handling/errno.h"
 #include "libc/stddef.h"
