@@ -114,6 +114,19 @@ kerr_t scheduler_init(void) {
     return E_OK;
 }
 
+static void task_return_error(void) {
+    serial_debug_puts("\n[TASK] CRITICAL ERROR: Task ");
+    serial_debug_puts(current_task->name);
+    serial_debug_puts(" returned without calling task_exit()!\n");
+    serial_debug_puts("[TASK] This is a bug in the task code - tasks must either:\n");
+    serial_debug_puts("[TASK]   1. Call task_exit() when done, or\n");
+    serial_debug_puts("[TASK]   2. Loop forever (never return)\n");
+    serial_debug_puts("[TASK] System halting to prevent corruption.\n");
+
+    // Halt the system - this is a critical programming error
+    while(1) asm volatile("hlt");
+}
+
 task_t* task_create(const char* name, void (*entry_point)(void)) {
     // Find free slot
     uint32_t pid = next_pid;
@@ -360,7 +373,6 @@ void scheduler_tick(void) {
     // Increment runtime
     current_task->total_runtime++;
 
-    // Time slice expired? Switch tasks
     if (current_task->time_slice == 0) {
         task_t* old_task = current_task;
         task_t* new_task = scheduler_pick_next();
@@ -377,17 +389,6 @@ void scheduler_tick(void) {
             new_task->state = RUNNING;
             new_task->time_slice = TIME_SLICE_TICKS;
             current_task = new_task;
-
-            // Debug: Log context switch (but not too frequently)
-            static uint64_t switch_count = 0;
-            switch_count++;
-            if (switch_count % 100 == 0) {
-                serial_debug_puts("[SCHEDULER] Context switch: ");
-                serial_debug_puts(old_task->name);
-                serial_debug_puts(" -> ");
-                serial_debug_puts(new_task->name);
-                serial_debug_puts("\n");
-            }
 
             // Perform context switch
             task_switch(&old_task->context, new_task->context);

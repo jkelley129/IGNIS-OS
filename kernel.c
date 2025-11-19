@@ -34,12 +34,7 @@ void shell_task_entry(void) {
     // Initialize shell
     shell_init();
 
-    // Shell runs forever, processing input
-    while(1) {
-        // Shell is driven by keyboard interrupts
-        // Just yield CPU when nothing to do
-        task_yield();
-    }
+    task_exit();
 }
 
 void kernel_main() {
