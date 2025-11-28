@@ -13,6 +13,7 @@
 | `panic`     | `panic <msg>` | Initiates kernel panic            |
 | `panictest` | `panictest`   | Tests kernel panic macros         |
 | `ps`        | `ps`          | Print task list                   |
+| `pidof`     | `pidof <name>`| Get PID of task by name           |
 | `pkill`     | `pkill`       | Kills the current task            |
 | `reboot`    | `reboot`      | Reboot system with a triple fault |
 | `banner`    | `banner`      | Display system banner             |

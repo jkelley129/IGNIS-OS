@@ -49,6 +49,9 @@ void task_yield(void);
 void task_block(void);
 void task_unblock(task_t* task);
 void task_sleep(uint64_t ticks);
+task_t* task_get_by_pid(uint32_t pid);
+task_t* task_get_by_name(const char* name);
+uint32_t task_pidof(task_t* task);
 void task_print_list(void);
 
 // Scheduler functions

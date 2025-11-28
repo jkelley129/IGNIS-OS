@@ -57,6 +57,7 @@ static const shell_command_t commands[] = {
         {"panic", "Test kernel panic (WARNING: will halt system)", cmd_panic},
         {"panictest", "Test panic with assertion", cmd_panictest},
         {"ps", "Print task list", cmd_ps},
+        {"pidof", "Get PID of a task by name", cmd_pidof},
         {"pkill", "Kill a certain task", cmd_pkill},
         {"reboot", "Reboots the system with a triple fault", cmd_reboot},
         {"banner", "Displays a fun system banner", cmd_banner},
@@ -1266,6 +1267,28 @@ void cmd_panictest(int argc, char** argv) {
 
 void cmd_ps(int argc, char** argv) {
     task_print_list();
+}
+
+void cmd_pidof(int argc, char** argv) {
+    if (argc < 2) {
+        console_perror("Usage: pidof <task_name>\n");
+        return;
+    }
+
+    const char* task_name = argv[1];
+    task_t* task = task_get_by_name(task_name);
+    if(!task) {
+        console_perror("Task not found\n");
+        return;
+    }
+
+    char pid_str[16];
+    uitoa(task_pidof(task), pid_str);
+    console_puts("PID of ");
+    console_puts(task_name);
+    console_puts(": ");
+    console_puts(pid_str);
+    console_putc('\n');
 }
 
 void cmd_pkill(int argc, char** argv) {

@@ -540,6 +540,25 @@ void task_sleep(uint64_t ticks) {
     scheduler_tick();
 }
 
+task_t* task_get_by_pid(uint32_t pid) {
+    if (pid >= task_table_capacity) return NULL;
+    return task_table[pid];
+}
+
+task_t* task_get_by_name(const char* name) {
+    for (uint32_t i = 0; i < task_table_capacity; i++) {
+        if (task_table[i] && strcmp(task_table[i]->name, name) == 0) {
+            return task_table[i];
+        }
+    }
+    return NULL;
+}
+
+uint32_t task_pidof(task_t* task) {
+    if (!task) return (uint32_t)-1;
+    return task->pid;
+}
+
 // Utility function to print task list (for debugging)
 void task_print_list(void) {
     console_puts("\n=== Task List ===\n");
