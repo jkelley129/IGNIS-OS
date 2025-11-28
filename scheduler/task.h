@@ -4,7 +4,6 @@
 #include "libc/stdint.h"
 #include "error_handling/errno.h"
 
-#define MAX_TASKS 64
 #define TASK_STACK_SIZE 8192  // 8KB stack per task
 
 typedef enum {

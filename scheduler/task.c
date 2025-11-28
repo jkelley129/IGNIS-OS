@@ -5,7 +5,9 @@
 #include "io/serial.h"
 #include "drivers/pit.h"
 
-static task_t* task_table[MAX_TASKS];
+static task_t** task_table = NULL;     // Dynamic array of task pointers
+static uint32_t task_table_capacity = 0;
+static uint32_t task_table_size = 0;   // Number of slots actually used
 static uint32_t next_pid = 0;
 static task_t* current_task = NULL;
 static task_t* idle_task = NULL;
@@ -17,6 +19,7 @@ static task_t* ready_queue_tail = NULL;
 static task_t* sleep_queue_head = NULL;
 
 #define TIME_SLICE_TICKS 10  // 100ms at 100Hz
+#define INITIAL_TASK_CAPACITY 8
 
 // Task exit function - called when task returns
 void task_exit(void) {
@@ -46,7 +49,7 @@ void task_exit(void) {
 
 static void scheduler_reap_terminated(void) {
     // Scan task table for terminated tasks
-    for (uint32_t i = 0; i < MAX_TASKS; i++) {
+    for (uint32_t i = 0; i < task_table_capacity; i++) {
         task_t* task = task_table[i];
 
         if (task && task->state == TERMINATED && task != current_task) {
@@ -65,6 +68,7 @@ static void scheduler_reap_terminated(void) {
 
             // Remove from task table
             task_table[i] = NULL;
+            task_table_size--;
 
             // Free task structure
             kfree(task);
@@ -79,9 +83,69 @@ static void idle_task_entry(void) {
     }
 }
 
+static kerr_t task_table_grow(void) {
+    uint32_t new_capacity = task_table_capacity * 2;
+    task_t** new_table = kmalloc(new_capacity * sizeof(task_t*));
+
+    if (!new_table) {
+        serial_debug_puts("[TASK] Failed to grow task table\n");
+        return E_NOMEM;
+    }
+
+    // Copy old entries
+    for (uint32_t i = 0; i < task_table_capacity; i++) {
+        new_table[i] = task_table[i];
+    }
+
+    // Initialize new slots to NULL
+    for (uint32_t i = task_table_capacity; i < new_capacity; i++) {
+        new_table[i] = NULL;
+    }
+
+    // Free old table and switch
+    kfree(task_table);
+    task_table = new_table;
+    task_table_capacity = new_capacity;
+
+    serial_debug_puts("[TASK] Grew task table to capacity ");
+    char cap_str[16];
+    uitoa(new_capacity, cap_str);
+    serial_debug_puts(cap_str);
+    serial_debug_puts("\n");
+
+    return E_OK;
+}
+
+static uint32_t task_find_free_slot(void) {
+    // First try to find a NULL slot (reuse PID)
+    for (uint32_t i = 0; i < task_table_capacity; i++) {
+        if (task_table[i] == NULL) {
+            return i;
+        }
+    }
+
+    // No free slots, need to grow
+    if (task_table_grow() != E_OK) {
+        return (uint32_t)-1;  // Error
+    }
+
+    // Return first slot in new space
+    return task_table_capacity / 2;  // First slot of newly allocated space
+}
+
 kerr_t task_init(void) {
-    // Clear task table
-    for (int i = 0; i < MAX_TASKS; i++) {
+    // Allocate initial task table
+    task_table = kmalloc(INITIAL_TASK_CAPACITY * sizeof(task_t*));
+    if (!task_table) {
+        serial_debug_puts("[TASK] Failed to allocate task table\n");
+        return E_NOMEM;
+    }
+
+    task_table_capacity = INITIAL_TASK_CAPACITY;
+    task_table_size = 0;
+
+    // Initialize to NULL
+    for (uint32_t i = 0; i < task_table_capacity; i++) {
         task_table[i] = NULL;
     }
 
@@ -90,7 +154,12 @@ kerr_t task_init(void) {
     ready_queue_tail = NULL;
     sleep_queue_head = NULL;
 
-    serial_debug_puts("[TASK] Task system initialized\n");
+    serial_debug_puts("[TASK] Task system initialized with capacity ");
+    char cap_str[16];
+    uitoa(INITIAL_TASK_CAPACITY, cap_str);
+    serial_debug_puts(cap_str);
+    serial_debug_puts("\n");
+
     return E_OK;
 }
 
@@ -126,10 +195,10 @@ static void task_return_error(void) {
 }
 
 task_t* task_create(const char* name, void (*entry_point)(void)) {
-    // Find free slot
-    uint32_t pid = next_pid;
-    if (pid >= MAX_TASKS) {
-        serial_debug_puts("[TASK] Task table full!\n");
+    // Find a free slot (will grow table if needed)
+    uint32_t pid = task_find_free_slot();
+    if (pid == (uint32_t)-1) {
+        serial_debug_puts("[TASK] Cannot allocate PID\n");
         return NULL;
     }
 
@@ -187,7 +256,7 @@ task_t* task_create(const char* name, void (*entry_point)(void)) {
 
     // Add to task table
     task_table[pid] = task;
-    next_pid++;
+    task_table_size++;
 
     serial_debug_puts("[TASK] Created task: ");
     serial_debug_puts(name);
@@ -238,8 +307,9 @@ void task_destroy(task_t* task) {
     }
 
     // Remove from table
-    if (task->pid < MAX_TASKS) {
+    if (task->pid < task_table_capacity) {
         task_table[task->pid] = NULL;
+        task_table_size--;
     }
 
     kfree(task);
@@ -476,7 +546,7 @@ void task_print_list(void) {
     console_puts("PID  Name            State      Runtime\n");
     console_puts("-------------------------------------------\n");
 
-    for (uint32_t i = 0; i < next_pid; i++) {
+    for (uint32_t i = 0; i < task_table_capacity; i++) {
         if (task_table[i]) {
             task_t* t = task_table[i];
             char num_str[32];
