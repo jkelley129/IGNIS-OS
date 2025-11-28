@@ -57,6 +57,7 @@ static const shell_command_t commands[] = {
         {"panic", "Test kernel panic (WARNING: will halt system)", cmd_panic},
         {"panictest", "Test panic with assertion", cmd_panictest},
         {"ps", "Print task list", cmd_ps},
+        {"pkill", "Kill a certain task", cmd_pkill},
         {"reboot", "Reboots the system with a triple fault", cmd_reboot},
         {"banner", "Displays a fun system banner", cmd_banner},
         {0, 0, 0} // Sentinel
@@ -1267,6 +1268,10 @@ void cmd_panictest(int argc, char** argv) {
 
 void cmd_ps(int argc, char** argv) {
     task_print_list();
+}
+
+void cmd_pkill(int argc, char** argv) {
+    task_exit();
 }
 
 void cmd_reboot(int argc, char** argv) {
