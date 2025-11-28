@@ -14,6 +14,7 @@ typedef struct {
 } shell_command_t;
 
 void shell_init();
+void shell_run();
 void shell_handle_char(char c);
 void shell_print_prompt();
 void shell_execute_command();

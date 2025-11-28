@@ -11,7 +11,7 @@ LDFLAGS = -m elf_x86_64 -T link.ld -nostdlib
 # Directories
 BUILD_DIR = build
 OUTPUT_DIR = dist
-SRC_DIRS = . boot interrupts drivers drivers/disks io console shell mm mm/allocators scheduler fs fs/filesystems libc error_handling
+SRC_DIRS = . boot interrupts drivers drivers/disks io console tty shell mm mm/allocators scheduler fs fs/filesystems libc error_handling
 
 # Disk images
 ATA_DISK = $(OUTPUT_DIR)/ata_disk.img

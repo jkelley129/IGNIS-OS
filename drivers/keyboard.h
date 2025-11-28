@@ -10,6 +10,5 @@ typedef void (*keyboard_callback_t)(char);
 
 kerr_t keyboard_register();
 void keyboard_handler();
-void keyboard_set_callback(keyboard_callback_t callback);
 
 #endif

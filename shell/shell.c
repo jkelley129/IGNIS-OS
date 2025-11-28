@@ -1,5 +1,5 @@
 #include "shell.h"
-
+#include "tty/tty.h"
 #include "driver.h"
 #include "serial.h"
 #include "console/console.h"
@@ -86,8 +86,6 @@ static int parse_command(char* input, char** argv, int max_args) {
 }
 
 void shell_init() {
-    memset(cmd_buffer, 0, CMD_BUFFER_SIZE);
-    cmd_pos = 0;
     shell_print_prompt();
 }
 
@@ -1370,6 +1368,68 @@ void shell_handle_char(char c) {
     } else {
         if (cmd_pos < CMD_BUFFER_SIZE - 1) {
             cmd_buffer[cmd_pos++] = c;
+        }
+    }
+}
+
+void shell_run(void) {
+    char cmd_buffer[CMD_BUFFER_SIZE];
+
+    serial_debug_puts("[SHELL] Shell task running\n");
+    console_puts("\nIGNIS Shell Ready\n");
+    console_puts("Type 'help' for available commands.\n\n");
+
+    while (1) {
+        shell_print_prompt();
+
+        // Blocking read - will sleep until user presses Enter
+        size_t bytes_read = tty_read(cmd_buffer, CMD_BUFFER_SIZE);
+
+        serial_debug_puts("[SHELL] Read ");
+        char num_str[16];
+        uitoa(bytes_read, num_str);
+        serial_debug_puts(num_str);
+        serial_debug_puts(" bytes: ");
+        serial_debug_puts(cmd_buffer);
+
+        // Remove trailing newline
+        if (bytes_read > 0 && cmd_buffer[bytes_read - 1] == '\n') {
+            cmd_buffer[bytes_read - 1] = '\0';
+            bytes_read--;
+        }
+
+        // Skip empty commands
+        if (bytes_read == 0) {
+            continue;
+        }
+
+        // Parse command into argc/argv
+        char* argv[MAX_ARGS];
+        int argc = parse_command(cmd_buffer, argv, MAX_ARGS);
+
+        if (argc == 0) {
+            continue;
+        }
+
+        // Find and execute command
+        int found = 0;
+        for (int i = 0; commands[i].name; i++) {
+            if (strcmp(argv[0], commands[i].name) == 0) {
+                commands[i].handler(argc, argv);
+                found = 1;
+                break;
+            }
+        }
+
+        if (!found) {
+            console_puts("\n");
+            console_set_color((console_color_attr_t){CONSOLE_COLOR_RED, CONSOLE_COLOR_BLACK});
+            console_puts("Error: ");
+            console_set_color((console_color_attr_t){CONSOLE_COLOR_WHITE, CONSOLE_COLOR_BLACK});
+            console_puts("Unknown command '");
+            console_puts(argv[0]);
+            console_puts("'\n");
+            console_puts("Type 'help' for available commands.\n\n");
         }
     }
 }

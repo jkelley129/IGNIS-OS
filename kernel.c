@@ -1,4 +1,5 @@
 #include "driver.h"
+#include "tty/tty.h"
 #include "console/console.h"
 #include "disks/nvme.h"
 #include "interrupts/idt.h"
@@ -33,6 +34,7 @@ void shell_task_entry(void) {
 
     // Initialize shell
     shell_init();
+    shell_run();
 
     task_exit();
 }
@@ -113,6 +115,8 @@ void kernel_main() {
 
     TRY_INIT("NVMe",nvme_register(), err_count);
 
+    TRY_INIT("TTY", tty_init(), err_count);
+
     if(err_count == 0) console_puts_color("\nReady! System is running.\n", COLOR_SUCCESS);
     else{
         char num_str[3];
@@ -142,9 +146,6 @@ void kernel_main() {
     }
 
     driver_list();
-
-    // Set keyboard callback to shell
-    keyboard_set_callback(shell_handle_char);
 
     // NOW enable interrupts - scheduler is ready
     idt_enable_interrupts();

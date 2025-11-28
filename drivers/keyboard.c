@@ -4,6 +4,7 @@
 #include "driver.h"
 #include "error_handling/errno.h"
 #include "libc/stddef.h"
+#include "tty/tty.h"
 
 // US QWERTY keyboard layout scancode to ASCII
 static const char scancode_to_ascii[] = {
@@ -23,7 +24,6 @@ static const char scancode_to_ascii_shift[] = {
 };
 
 static uint8_t shift_pressed = 0;
-static keyboard_callback_t key_callback = 0;
 
 // Forward declaration of driver init function
 static kerr_t keyboard_driver_init(driver_t* drv);
@@ -51,10 +51,6 @@ kerr_t keyboard_register() {
     return driver_register(&keyboard_driver);
 }
 
-void keyboard_set_callback(keyboard_callback_t callback) {
-    key_callback = callback;
-}
-
 void keyboard_handler() {
     uint8_t scancode = inb(KEYBOARD_DATA_PORT);
 
@@ -68,10 +64,9 @@ void keyboard_handler() {
         return;
     }
 
+    // Handle backspace
     if(scancode == 0x0E) {
-        if (key_callback) {
-            key_callback('\b');
-        }
+        tty_input_char('\b');
         return;
     }
 
@@ -90,13 +85,8 @@ void keyboard_handler() {
         }
     }
 
-    // Print the character if valid (but not backspace)
-    if (c && c != '\b') {  // Added check to exclude '\b'
-        if (key_callback) {
-            key_callback(c);
-            console_putc(c);
-        } else {
-            console_putc(c);
-        }
+    // Send to TTY layer
+    if (c) {
+        tty_input_char(c);
     }
 }
