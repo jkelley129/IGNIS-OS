@@ -1,4 +1,5 @@
 #include "shell.h"
+#include "libc/stdlib.h"
 #include "tty/tty.h"
 #include "driver.h"
 #include "serial.h"
@@ -1292,7 +1293,19 @@ void cmd_pidof(int argc, char** argv) {
 }
 
 void cmd_pkill(int argc, char** argv) {
-    task_exit();
+    if (argc < 2) {
+        console_perror("Usage: pkill <task_pid>\n");
+        return;
+    }
+
+    const int pid = atoi(argv[1]);
+    if (pid <= 0) {
+        console_perror("Invalid PID\n");
+        return;
+    }
+
+    task_t* task = task_get_by_pid(pid);
+    task_destroy(task);
 }
 
 void cmd_reboot(int argc, char** argv) {
