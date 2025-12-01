@@ -52,6 +52,7 @@ void cmd_panic(int argc, char** argv);
 void cmd_panictest(int argc, char** argv);
 void cmd_ps(int argc, char** argv);
 void cmd_pidof(int argc, char** argv);
+void cmd_kill(int argc, char** argv);
 void cmd_pkill(int argc, char** argv);
 void cmd_reboot(int argc, char** argv);
 void cmd_banner(int argc, char** argv);

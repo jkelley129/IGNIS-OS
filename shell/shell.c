@@ -59,7 +59,8 @@ static const shell_command_t commands[] = {
         {"panictest", "Test panic with assertion", cmd_panictest},
         {"ps", "Print task list", cmd_ps},
         {"pidof", "Get PID of a task by name", cmd_pidof},
-        {"pkill", "Kill a certain task", cmd_pkill},
+        {"kill", "Kill a task by PID", cmd_kill},
+        {"pkill", "Kill a certain task by name", cmd_pkill},
         {"reboot", "Reboots the system with a triple fault", cmd_reboot},
         {"banner", "Displays a fun system banner", cmd_banner},
         {0, 0, 0} // Sentinel
@@ -1292,7 +1293,7 @@ void cmd_pidof(int argc, char** argv) {
     console_putc('\n');
 }
 
-void cmd_pkill(int argc, char** argv) {
+void cmd_kill(int argc, char** argv) {
     if (argc < 2) {
         console_perror("Usage: pkill <task_pid>\n");
         return;
@@ -1305,6 +1306,22 @@ void cmd_pkill(int argc, char** argv) {
     }
 
     task_t* task = task_get_by_pid(pid);
+    task_destroy(task);
+}
+
+void cmd_pkill(int argc, char** argv) {
+    if (argc < 2) {
+        console_perror("Usage: pkill <task_name>\n");
+        return;
+    }
+
+    const char* name = argv[1];
+
+    task_t* task = task_get_by_name(name);
+    if (!task) {
+        console_perror("Task not found");
+        return;
+    }
     task_destroy(task);
 }
 

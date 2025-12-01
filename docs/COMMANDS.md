@@ -1,22 +1,23 @@
 # IGNIS Shell - Command Reference
 
 ## System Commands
-| Command     | Usage         | Description                       |
-|-------------|---------------|-----------------------------------|
-| `help`      | `help`        | Display all available commands    |
-| `about`     | `about`       | Show OS information               |
-| `clear`     | `clear`       | Clear the screen                  |
-| `uptime`    | `uptime`      | Show system uptime                |
-| `ticks`     | `ticks`       | Show PIT timer ticks              |
-| `echo`      | `echo <text>` | Print text to screen              |
-| `lsdrv`     | `lsdrv`       | List all registered drivers       |
-| `panic`     | `panic <msg>` | Initiates kernel panic            |
-| `panictest` | `panictest`   | Tests kernel panic macros         |
-| `ps`        | `ps`          | Print task list                   |
-| `pidof`     | `pidof <name>`| Get PID of task by name           |
-| `pkill`     | `pkill`       | Kills the current task            |
-| `reboot`    | `reboot`      | Reboot system with a triple fault |
-| `banner`    | `banner`      | Display system banner             |
+| Command     | Usage          | Description                       |
+|-------------|----------------|-----------------------------------|
+| `help`      | `help`         | Display all available commands    |
+| `about`     | `about`        | Show OS information               |
+| `clear`     | `clear`        | Clear the screen                  |
+| `uptime`    | `uptime`       | Show system uptime                |
+| `ticks`     | `ticks`        | Show PIT timer ticks              |
+| `echo`      | `echo <text>`  | Print text to screen              |
+| `lsdrv`     | `lsdrv`        | List all registered drivers       |
+| `panic`     | `panic <msg>`  | Initiates kernel panic            |
+| `panictest` | `panictest`    | Tests kernel panic macros         |
+| `ps`        | `ps`           | Print task list                   |
+| `pidof`     | `pidof <name>` | Get PID of task by name           |
+| `kill`      | `kill <pid>`   | Kill task by PID                  |
+| `pkill`     | `pkill <name>` | Kills a task by name              |
+| `reboot`    | `reboot`       | Reboot system with a triple fault |
+| `banner`    | `banner`       | Display system banner             |
 
 ## Memory Management Commands
 
