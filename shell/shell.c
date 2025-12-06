@@ -1240,6 +1240,9 @@ void cmd_panic(int argc, char** argv) {
     message[pos] = '\0';
 
     // Trigger panic with context
+    console_puts("Panicking in 1...\n");
+    serial_debug_puts("[SHELL] Triggering kernel panic...\n");
+    task_sleep(100);
     PANIC(message);
 }
 

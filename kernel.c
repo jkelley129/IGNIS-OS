@@ -32,8 +32,6 @@
 void shell_task_entry(void) {
     serial_debug_puts("Shell task started\n");
 
-    // Initialize shell
-    shell_init();
     shell_run();
 
     task_exit();
