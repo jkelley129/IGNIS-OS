@@ -16,6 +16,7 @@
 | `pidof`     | `pidof <name>` | Get PID of task by name           |
 | `kill`      | `kill <pid>`   | Kill task by PID                  |
 | `pkill`     | `pkill <name>` | Kills a task by name              |
+| `exit`      | `exit`         | Exit the shell                    |
 | `reboot`    | `reboot`       | Reboot system with a triple fault |
 | `banner`    | `banner`       | Display system banner             |
 

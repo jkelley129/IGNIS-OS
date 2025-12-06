@@ -61,6 +61,7 @@ static const shell_command_t commands[] = {
         {"pidof", "Get PID of a task by name", cmd_pidof},
         {"kill", "Kill a task by PID", cmd_kill},
         {"pkill", "Kill a certain task by name", cmd_pkill},
+        {"exit", "Exits the shell task", cmd_exit},
         {"reboot", "Reboots the system with a triple fault", cmd_reboot},
         {"banner", "Displays a fun system banner", cmd_banner},
         {0, 0, 0} // Sentinel
@@ -1326,6 +1327,10 @@ void cmd_pkill(int argc, char** argv) {
         return;
     }
     task_destroy(task);
+}
+
+void cmd_exit(int argc, char** argv) {
+    task_exit();
 }
 
 void cmd_reboot(int argc, char** argv) {
