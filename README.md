@@ -10,12 +10,17 @@ This is **NOT** a Linux distribution or UNIX system. It is currently just a kern
 - For a full feature list, look [here](#current-features)
 
 ## Installation
+### Expected Environment
+A Unix-like host OS is expected for building and running IGNIS OS. Linux with a mainstream distribution is recommended
+but macOS will likely work as well, though it has not been tested. 
+Windows is only supported via WSL2.
+
 ### Required Build Dependencies
-- A modern C compiler(GNU gcc recommended)
-- A linker (GNU ld recommended)
-- An assembler (NASM recommended)
+- A modern C compiler(GNU `gcc` recommended)
+- A linker (GNU `ld` recommended)
+- An assembler (`nasm` recommended)
 - grub-mkrescue
-- make
+- `make`
 
 ### Required Emulator
 - You must install the QEMU emulator to for this project.
@@ -50,18 +55,16 @@ Features in rough chronological order of implementation
   - Buddy allocator
   - Slab allocator
   - Unified allocator interface([mm/allocators/kmalloc.c](https://github.com/jkelley129/IGNIS-OS/blob/main/mm/allocators/kmalloc.c))
-- Process scheduler and task system
+- Process scheduler and task system with support for multiple processes
 
-## TODO
-- *(TEST)* Disk drivers for persistent storage(on branch [disk_testing](https://github.com/jkelley129/IGNIS-OS/tree/disk_testing)) **[ ON HOLD ]**
-- Improve and test scheduler logic with multiple processes
-- Implementation of an on-disk filesystem
-- More device drivers for more devices
+## TODO / Project Goals
 - User space with limited permissions
 - Support for executing user programs
 - User applications(text editor, clock, stopwatch, utilities)
+- More device drivers for more devices
+- Implementation of an on-disk filesystem
 - Audio integration
-- Graphical User Interface(maybe)
+- Graphical User Interface
 
 ## Contributing
 ### Issues
