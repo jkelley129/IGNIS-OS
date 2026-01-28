@@ -153,15 +153,19 @@ void pmm_free_pages(uint64_t phys_addr, size_t count) {
 }
 
 void pmm_mark_region_used(uint64_t start, uint64_t end) {
-    //Align to boundries
+    //Align to boundaries
     start = PAGE_ALIGN_DOWN(start);
+
     end = PAGE_ALIGN_UP(end);
 
     //Only mark pages in region
-    if (start < PHYS_FREE_START) start = PHYS_FREE_START;
+    if (start < PHYS_FREE_START) {
+        start = PHYS_FREE_START;
+        end += PHYS_FREE_START;
+    }
     if (end > PHYS_MEMORY_END) end = PHYS_MEMORY_END;
     if (start >= end) {
-        serial_debug_puts("[PMM] E_INVALID start cannot be greater than end");
+        serial_debug_puts("[PMM] E_INVALID start cannot be greater than or equal to end\n");
         return;
     }
 
