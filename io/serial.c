@@ -26,9 +26,6 @@ kerr_t serial_init(uint16_t port) {
     // IRQs enabled, RTS/DSR set
     outb(port + SERIAL_MODEM_CTRL, 0x0B);
 
-    // Test serial chip (send byte 0xAE and check if serial returns same byte)
-    outb(port + SERIAL_DATA, 0xAE);
-
     //Check if serial is faulty
     if (inb(port + SERIAL_DATA) != 0xAE) return E_HARDWARE;
 
