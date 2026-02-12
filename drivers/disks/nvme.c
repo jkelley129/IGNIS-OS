@@ -267,31 +267,31 @@ static kerr_t nvme_wait_completion(nvme_controller_t* ctrl, nvme_queue_pair_t* q
 
 //Create I/O completion queue
 static kerr_t nvme_create_io_cq(nvme_controller_t* ctrl) {
-    nvme_sq_entry_t cmd = {0};
+    nvme_sq_entry_t* cmd = kmalloc(sizeof(nvme_sq_entry_t*));
 
-    cmd.cdw0 = NVME_ADMIN_CREATE_CQ;
-    cmd.cdw0 |= (ctrl->command_id++ << 16);
-    cmd.prp1 = ctrl->io_queue.cq_phys;
-    cmd.cdw10 = ((ctrl->io_queue.cq_size - 1) << 16) | 1;  // Queue size and ID
-    cmd.cdw11 = 0x1;  // Physically contiguous
+    cmd->cdw0 = NVME_ADMIN_CREATE_CQ;
+    cmd->cdw0 |= (ctrl->command_id++ << 16);
+    cmd->prp1 = ctrl->io_queue.cq_phys;
+    cmd->cdw10 = ((ctrl->io_queue.cq_size - 1) << 16) | 1;  // Queue size and ID
+    cmd->cdw11 = 0x1;  // Physically contiguous
 
-    nvme_submit_command(ctrl, &ctrl->admin_queue, &cmd, 1);
-    return nvme_wait_completion(ctrl, &ctrl->admin_queue, (cmd.cdw0 >> 16) & 0xFFFF, 1);
+    nvme_submit_command(ctrl, &ctrl->admin_queue, cmd, 1);
+    return nvme_wait_completion(ctrl, &ctrl->admin_queue, (cmd->cdw0 >> 16) & 0xFFFF, 1);
 }
 
 
 //Create I/O submission queue
 static kerr_t nvme_create_io_sq(nvme_controller_t* ctrl) {
-    nvme_sq_entry_t cmd = {0};
+    nvme_sq_entry_t* cmd = kmalloc(sizeof(nvme_sq_entry_t*));
 
-    cmd.cdw0 = NVME_ADMIN_CREATE_SQ;
-    cmd.cdw0 |= (ctrl->command_id++ << 16);
-    cmd.prp1 = ctrl->io_queue.sq_phys;
-    cmd.cdw10 = ((ctrl->io_queue.sq_size - 1) << 16) | 1;
-    cmd.cdw11 = (1 << 16) | 0x1;
+    cmd->cdw0 = NVME_ADMIN_CREATE_SQ;
+    cmd->cdw0 |= (ctrl->command_id++ << 16);
+    cmd->prp1 = ctrl->io_queue.sq_phys;
+    cmd->cdw10 = ((ctrl->io_queue.sq_size - 1) << 16) | 1;
+    cmd->cdw11 = (1 << 16) | 0x1;
 
-    nvme_submit_command(ctrl, &ctrl->admin_queue, &cmd, 1);
-    return nvme_wait_completion(ctrl, &ctrl->admin_queue, (cmd.cdw0 >> 16) & 0xFFFF,1);
+    nvme_submit_command(ctrl, &ctrl->admin_queue, cmd, 1);
+    return nvme_wait_completion(ctrl, &ctrl->admin_queue, (cmd->cdw0 >> 16) & 0xFFFF,1);
 }
 
 //Identify controller
@@ -317,25 +317,38 @@ int nvme_identify_controller(nvme_controller_t* ctrl, nvme_identify_controller_t
 
     serial_debug_puts("[NVME] Building identify command...\n");
 
-    nvme_sq_entry_t cmd = {0};
-    cmd.cdw0 = NVME_ADMIN_IDENTIFY;
-    cmd.cdw0 |= (ctrl->command_id++ << 16);
-    cmd.nsid = 0;
-    cmd.prp1 = buffer_phys;  // FIX: Use physical address!
-    cmd.cdw10 = NVME_IDENTIFY_CONTROLLER;
+    serial_debug_puts("nvme_sq_entry_t cmd = {0};");
+    nvme_sq_entry_t* cmd = kmalloc(sizeof(nvme_sq_entry_t));
+    if (!cmd) {
+        serial_debug_puts("[NVME] Failed to allocate command buffer\n");
+        return E_NOMEM;
+    }
+    memset(cmd, 0, sizeof(*cmd));
+
+    if (!ctrl || !ctrl->admin_queue.sq) {
+        serial_debug_puts("[NVME] Admin queue not initialized!\n");
+        kfree(cmd);
+        return E_HARDWARE;
+    }
+
+    cmd->cdw0 = NVME_ADMIN_IDENTIFY;
+    cmd->cdw0 |= (ctrl->command_id++ << 16);
+    cmd->nsid = 0;
+    cmd->prp1 = buffer_phys;
+    cmd->cdw10 = NVME_IDENTIFY_CONTROLLER;
 
     serial_debug_puts("[NVME] Command ID: ");
     char num_str[16];
-    uitoa((cmd.cdw0 >> 16) & 0xFFFF, num_str);
+    uitoa((cmd->cdw0 >> 16) & 0xFFFF, num_str);
     serial_debug_puts(num_str);
     serial_debug_puts("\n");
 
     serial_debug_puts("[NVME] Submitting command...\n");
-    nvme_submit_command(ctrl, &ctrl->admin_queue, &cmd, 1);
+    nvme_submit_command(ctrl, &ctrl->admin_queue, cmd, 1);
 
     serial_debug_puts("[NVME] Waiting for completion...\n");
-    kerr_t err = nvme_wait_completion(ctrl, &ctrl->admin_queue, (cmd.cdw0 >> 16) & 0xFFFF, 1);
-
+    kerr_t err = nvme_wait_completion(ctrl, &ctrl->admin_queue, (cmd->cdw0 >> 16) & 0xFFFF, 1);
+    kfree(cmd);
     serial_debug_puts("[NVME] Completion status: ");
     uitoa(err, num_str);
     serial_debug_puts(num_str);
@@ -365,7 +378,11 @@ int nvme_identify_namespace(nvme_controller_t* ctrl, uint32_t nsid, nvme_identif
     serial_debug_puts(num_str);
     serial_debug_puts("...\n");
 
+    serial_debug_puts("[NVME] Allocating identify buffer...\n");
     void* buffer = kmalloc(4096);
+    serial_debug_puts("[NVME] Buffer allocated at: 0x");
+    serial_puthex(COM1, (uint64_t)buffer, 16);
+    serial_debug_putc('\n');
     if(!buffer) {
         serial_debug_puts("[NVME] Failed to allocate buffer\n");
         return E_NOMEM;
@@ -375,15 +392,16 @@ int nvme_identify_namespace(nvme_controller_t* ctrl, uint32_t nsid, nvme_identif
     // FIX: Convert to physical address for DMA
     uint64_t buffer_phys = VIRT_TO_PHYS((uint64_t)buffer);
 
-    nvme_sq_entry_t cmd = {0};
-    cmd.cdw0 = NVME_ADMIN_IDENTIFY;
-    cmd.cdw0 |= (ctrl->command_id++ << 16);
-    cmd.nsid = nsid;
-    cmd.prp1 = buffer_phys;  // FIX: Use physical address!
-    cmd.cdw10 = NVME_IDENTIFY_NAMESPACE;
+    nvme_sq_entry_t* cmd = kmalloc(sizeof(nvme_sq_entry_t*));
+    cmd->cdw0 = NVME_ADMIN_IDENTIFY;
+    cmd->cdw0 |= (ctrl->command_id++ << 16);
+    cmd->nsid = nsid;
+    cmd->prp1 = buffer_phys;  // FIX: Use physical address!
+    cmd->cdw10 = NVME_IDENTIFY_NAMESPACE;
 
-    nvme_submit_command(ctrl, &ctrl->admin_queue, &cmd, 1);
-    kerr_t err = nvme_wait_completion(ctrl, &ctrl->admin_queue, (cmd.cdw0 >> 16) & 0xFFFF, 1);
+    serial_debug_puts("[NVME](Identify Namespace) Submitting command");
+    nvme_submit_command(ctrl, &ctrl->admin_queue, cmd, 1);
+    kerr_t err = nvme_wait_completion(ctrl, &ctrl->admin_queue, (cmd->cdw0 >> 16) & 0xFFFF, 1);
 
     if (err == E_OK) {
         //Copy data
